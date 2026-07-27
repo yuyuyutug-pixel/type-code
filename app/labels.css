@@ -1,1 +1,123 @@
-.axisChip:nth-child(1) small:empty::after{content:'共感・交流'}.axisChip:nth-child(2) small:empty::after{content:'計画・管理'}.axisChip:nth-child(3) small:empty::after{content:'論理・分析'}.axisChip:nth-child(4) small:empty::after{content:'探究・好奇心'}.axisChip:nth-child(5) small:empty::after{content:'行動・実行'}.axisChip:nth-child(6) small:empty::after{content:'感受性・直感'}
+/* Navigator hero redesign */
+.heroStage{
+  margin:28px 0 16px;
+  padding:26px 14px 18px;
+  border-radius:28px;
+  background:
+    radial-gradient(circle at 50% 15%,rgba(154,132,255,.28),transparent 46%),
+    linear-gradient(155deg,#211842 0%,#38276c 58%,#211842 100%);
+  border:1px solid rgba(255,255,255,.16);
+  box-shadow:0 22px 45px rgba(44,29,91,.2);
+}
+.heroGlow{background:#a997ff;opacity:.28}
+.heroCharacterRow{
+  display:grid;
+  grid-template-columns:repeat(6,minmax(0,1fr));
+  align-items:end;
+  gap:4px;
+  position:relative;
+  min-height:170px;
+}
+.heroCharacter{height:168px;filter:drop-shadow(0 12px 12px rgba(7,3,22,.32))}
+.heroCaption{
+  position:relative;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:14px;
+  margin-top:12px;
+  padding-top:14px;
+  border-top:1px solid rgba(255,255,255,.14);
+  color:#fff;
+}
+.heroCaption span{color:#cfc5ff;font-size:9px;font-weight:800;letter-spacing:.18em;white-space:nowrap}
+.heroCaption b{color:#fff;font-size:14px;line-height:1.45;text-align:right}
+
+/* Horizontal navigator cards */
+.axisOverview{
+  display:flex;
+  gap:11px;
+  margin:14px -2px 24px;
+  padding:2px 2px 8px;
+  overflow-x:auto;
+  scroll-snap-type:x mandatory;
+  -webkit-overflow-scrolling:touch;
+  scrollbar-width:none;
+}
+.axisOverview::-webkit-scrollbar{display:none}
+.axisChip{
+  position:relative;
+  display:grid;
+  grid-template-columns:12px minmax(0,1fr);
+  align-items:center;
+  gap:11px;
+  flex:0 0 154px;
+  min-height:78px;
+  padding:14px 15px;
+  overflow:hidden;
+  border:1px solid #e4ddf2;
+  border-radius:20px;
+  background:linear-gradient(145deg,#fff,#f8f5ff);
+  box-shadow:0 10px 24px rgba(77,56,143,.08);
+  scroll-snap-align:start;
+}
+.axisChip::after{
+  content:'';
+  position:absolute;
+  width:70px;
+  height:70px;
+  right:-32px;
+  bottom:-38px;
+  border-radius:50%;
+  background:var(--chip-accent,#8b73ef);
+  opacity:.1;
+}
+.axisChip>span{
+  width:11px;
+  height:38px;
+  border-radius:999px;
+  align-self:center;
+}
+.axisChip div{min-width:0;position:relative;z-index:1}
+.axisChip b{
+  display:block;
+  font-size:17px;
+  font-weight:950;
+  letter-spacing:.04em;
+  line-height:1.1;
+  white-space:nowrap;
+}
+.axisChip small{
+  display:block;
+  margin-top:7px;
+  color:#756f82;
+  font-size:12px;
+  font-weight:750;
+  line-height:1.25;
+  white-space:nowrap;
+}
+.axisChip:nth-child(1){--chip-accent:#ff8fb1}.axisChip:nth-child(1) small{font-size:0}.axisChip:nth-child(1) small::after{content:'共感';font-size:12px}
+.axisChip:nth-child(2){--chip-accent:#6f8cff}.axisChip:nth-child(2) small{font-size:0}.axisChip:nth-child(2) small::after{content:'計画';font-size:12px}
+.axisChip:nth-child(3){--chip-accent:#8269ff}.axisChip:nth-child(3) small{font-size:0}.axisChip:nth-child(3) small::after{content:'論理';font-size:12px}
+.axisChip:nth-child(4){--chip-accent:#f6a447}.axisChip:nth-child(4) small{font-size:0}.axisChip:nth-child(4) small::after{content:'探究';font-size:12px}
+.axisChip:nth-child(5){--chip-accent:#58cda6}.axisChip:nth-child(5) small{font-size:0}.axisChip:nth-child(5) small::after{content:'行動';font-size:12px}
+.axisChip:nth-child(6){--chip-accent:#b96cff}.axisChip:nth-child(6) small{font-size:0}.axisChip:nth-child(6) small::after{content:'感性';font-size:12px}
+
+@media(max-width:640px){
+  .heroStage{margin-top:22px;padding:22px 8px 16px}
+  .heroCharacterRow{grid-template-columns:repeat(6,minmax(0,1fr));gap:0;min-height:124px}
+  .heroCharacter{height:126px}
+  .heroCaption{display:block;text-align:center;margin-top:8px;padding-top:12px}
+  .heroCaption span{display:block}
+  .heroCaption b{display:block;margin-top:5px;text-align:center;font-size:13px}
+  .axisOverview{margin-right:-16px;padding-right:16px}
+  .axisChip{flex-basis:142px;min-height:74px;padding:13px 14px}
+}
+
+@media(max-width:430px){
+  .heroStage{border-radius:22px;padding-left:5px;padding-right:5px}
+  .heroCharacterRow{min-height:108px}
+  .heroCharacter{height:110px}
+  .heroCaption b{font-size:12px}
+  .axisChip{flex-basis:136px}
+}
