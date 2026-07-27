@@ -1,0 +1,1 @@
+.axisChip:nth-child(1) small:empty::after{content:'共感・交流'}.axisChip:nth-child(2) small:empty::after{content:'計画・管理'}.axisChip:nth-child(3) small:empty::after{content:'論理・分析'}.axisChip:nth-child(4) small:empty::after{content:'探究・好奇心'}.axisChip:nth-child(5) small:empty::after{content:'行動・実行'}.axisChip:nth-child(6) small:empty::after{content:'感受性・直感'}
