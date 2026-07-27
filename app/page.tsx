@@ -8,7 +8,6 @@ type Character={name:string;role:string;image:string;line:string;accent:string};
 type Axis={key:AxisKey;positive:string;negative:string;character:Character;questions:string[]};
 type Screen='home'|'quiz'|'result';
 type Scores=Record<AxisKey,number>;
-
 type Match={code:string;name:string;score:number;reasons:string[];caution:string;tip:string};
 
 const axes:Axis[]=[
@@ -24,7 +23,8 @@ const questions=axes.flatMap(axis=>axis.questions.map(text=>({text,axis})));
 const options=[['かなり当てはまる',2],['少し当てはまる',1],['あまり当てはまらない',-1],['ほとんど当てはまらない',-2]] as const;
 const prefixes=['静かな','鋭い','柔らかな','大胆な','自由な','慎重な','熱を秘めた','揺るがない'];
 const nouns=['観察者','設計者','調整役','開拓者','探究者','実行者','共鳴者','指揮者'];
-const STORAGE_KEY='type-code-progress-v2';
+const STORAGE_KEY='type-code-progress-v3';
+const PREMIUM_KEY='type-code-premium-v1';
 const keys:AxisKey[]=['social','plan','logic','novelty','action','sensitive'];
 
 const axisText:Record<AxisKey,{positive:string;negative:string;strengthP:string;strengthN:string;riskP:string;riskN:string}>={
@@ -41,18 +41,17 @@ function codeName(num:number){return {code:`TC-${String(num).padStart(2,'0')}`,n
 
 function compatibility(base:number[]){
  return Array.from({length:64},(_,i)=>i+1).map(num=>{
-  const v=vectorFromNumber(num); let score=56; const reasons:string[]=[];
-  const same=(idx:number)=>base[idx]===v[idx];
+  const v=vectorFromNumber(num);let score=56;const reasons:string[]=[];const same=(idx:number)=>base[idx]===v[idx];
   if(same(2)){score+=12;reasons.push('判断基準が近く、重要な場面で話が通じやすい');}else{score+=5;reasons.push('論理と共感を補い合い、視野を広げられる');}
   if(same(5)){score+=10;reasons.push('感情の受け取り方が近く、安心感を作りやすい');}else{score+=4;reasons.push('感情の波を一方が支え、関係を安定させやすい');}
   if(same(1)){score+=9;reasons.push('予定や生活リズムを合わせやすい');}else score+=3;
   if(same(0)){score+=7;reasons.push('人付き合いの距離感が近い');}else{score+=5;reasons.push('社交性と静けさを役割分担できる');}
-  if(same(3)){score+=5;}else{score+=8;reasons.push('安定志向と好奇心が補完関係になる');}
-  if(same(4)){score+=6;}else{score+=8;reasons.push('行動力と慎重さを補い合える');}
+  if(same(3))score+=5;else{score+=8;reasons.push('安定志向と好奇心が補完関係になる');}
+  if(same(4))score+=6;else{score+=8;reasons.push('行動力と慎重さを補い合える');}
   const conflicts=[1,2,5].filter(x=>!same(x)).length;
   const caution=conflicts>=2?'予定・判断・感情表現の違いが重なると、互いに「分かってくれない」と感じやすい。':!same(4)?'決断速度が違うため、急かす側と待たせる側になりやすい。':'似ている分、同じ弱点を強め合う可能性がある。';
   const tip=!same(2)?'結論を出す前に「気持ち」と「事実」を分けて両方確認する。':!same(1)?'予定を固定する部分と自由にする部分を先に決める。':'役割を固定しすぎず、定期的に希望を言葉にする。';
-  const info=codeName(num);return {...info,score:Math.min(98,score),reasons:reasons.slice(0,3),caution,tip};
+  return {...codeName(num),score:Math.min(98,score),reasons:reasons.slice(0,3),caution,tip};
  }).sort((a,b)=>b.score-a.score);
 }
 
@@ -79,20 +78,133 @@ function calculate(answers:(number|null)[]){
 function CharacterImage({character,className=''}:{character:Character;className?:string}){return <div className={`characterVisual ${className}`} style={{'--accent':character.accent} as React.CSSProperties}><img src={character.image} alt={character.name}/></div>}
 
 export default function Home(){
- const [screen,setScreen]=useState<Screen>('home');const [index,setIndex]=useState(0);const [answers,setAnswers]=useState<(number|null)[]>(Array(48).fill(null));const [result,setResult]=useState<ReturnType<typeof calculate>|null>(null);const [hydrated,setHydrated]=useState(false);
- const current=questions[index];const characters=useMemo(()=>axes.map(a=>a.character),[]);const answeredCount=answers.filter(v=>v!==null).length;
- useEffect(()=>{try{const saved=localStorage.getItem(STORAGE_KEY);if(saved){const p=JSON.parse(saved);if(Array.isArray(p.answers)&&p.answers.length===48){setAnswers(p.answers);setIndex(Math.min(p.index,47));}}}catch{}setHydrated(true)},[]);
+ const [screen,setScreen]=useState<Screen>('home');
+ const [index,setIndex]=useState(0);
+ const [answers,setAnswers]=useState<(number|null)[]>(Array(48).fill(null));
+ const [result,setResult]=useState<ReturnType<typeof calculate>|null>(null);
+ const [hydrated,setHydrated]=useState(false);
+ const [premium,setPremium]=useState(false);
+ const [paying,setPaying]=useState(false);
+ const [paymentMessage,setPaymentMessage]=useState('');
+ const current=questions[index];
+ const characters=useMemo(()=>axes.map(a=>a.character),[]);
+ const answeredCount=answers.filter(v=>v!==null).length;
+
+ useEffect(()=>{
+  try{
+   setPremium(localStorage.getItem(PREMIUM_KEY)==='unlocked');
+   const saved=localStorage.getItem(STORAGE_KEY);
+   if(saved){const p=JSON.parse(saved);if(Array.isArray(p.answers)&&p.answers.length===48){setAnswers(p.answers);setIndex(Math.min(p.index,47));}}
+  }catch{}
+  setHydrated(true);
+
+  const params=new URLSearchParams(location.search);
+  const sessionId=params.get('session_id');
+  if(params.get('payment')==='success'&&sessionId){
+   setPaymentMessage('購入情報を確認しています…');
+   fetch('/api/verify-payment',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({sessionId})})
+    .then(r=>r.json()).then(data=>{
+     if(data.unlocked){
+      localStorage.setItem(PREMIUM_KEY,'unlocked');
+      setPremium(true);
+      setPaymentMessage('購入が確認できました。詳細分析を解除しました。');
+      history.replaceState({},'',location.pathname);
+     }else setPaymentMessage('支払いを確認できませんでした。');
+    }).catch(()=>setPaymentMessage('購入確認中に通信エラーが発生しました。'));
+  }else if(params.get('payment')==='cancelled'){
+   setPaymentMessage('購入はキャンセルされました。');
+   history.replaceState({},'',location.pathname);
+  }
+ },[]);
+
  useEffect(()=>{if(hydrated&&screen!=='result')localStorage.setItem(STORAGE_KEY,JSON.stringify({index,answers}))},[hydrated,index,answers,screen]);
- function start(fresh=true){if(fresh){setIndex(0);setAnswers(Array(48).fill(null));setResult(null);localStorage.removeItem(STORAGE_KEY)}setScreen('quiz');scrollTo({top:0,behavior:'smooth'})}
- function answer(value:number){const next=[...answers];next[index]=value;setAnswers(next);navigator.vibrate?.(18);if(index===47){setResult(calculate(next));setScreen('result');localStorage.removeItem(STORAGE_KEY);scrollTo({top:0,behavior:'smooth'})}else setIndex(index+1)}
- function share(){if(!result)return;const text=`私のTYPE CODEは ${result.code}「${result.name}」でした。\n相性TOP1は ${result.matches[0].code}。\n#TYPECODE`;if(navigator.share)navigator.share({title:'TYPE CODE',text,url:location.href}).catch(()=>{});else navigator.clipboard.writeText(`${text}\n${location.href}`).then(()=>alert('結果をコピーしました'))}
- return <main className="app"><div className="ambient ambientOne"/><div className="ambient ambientTwo"/><div className="shell"><header className="brand"><span className="brandMark">TC</span><span>TYPE CODE</span></header><div className="panel"><AnimatePresence mode="wait">
- {screen==='home'&&<motion.section className="page" key="home" initial={{opacity:0,y:18}} animate={{opacity:1,y:0}} exit={{opacity:0,y:-12}}><div className="eyebrow">64 PERSONALITY TYPES</div><h1 className="heroTitle">人は、<br/><strong>16タイプだけ</strong>では<br/>表せない。</h1><p className="lead">6人のナビゲーターと48問を進み、思考・行動・対人傾向を6軸で分析。相性まで根拠付きで読み解きます。</p><div className="heroStage"><div className="heroGlow"/><div className="heroCharacterRow">{characters.map((c,i)=><motion.div key={c.name} initial={{opacity:0,y:20}} animate={{opacity:1,y:0}} transition={{delay:.07*i}}><CharacterImage character={c} className="heroCharacter"/></motion.div>)}</div><div className="heroCaption"><span>MEET THE NAVIGATORS</span><b>6つの視点で、あなたを読み解く。</b></div></div><div className="characterGrid">{characters.map(c=><div className="characterCard" key={c.name}><CharacterImage character={c}/><div><b>{c.name}</b><span>{c.role}</span></div></div>)}</div><div className="stats"><div className="stat"><span>質問数</span><b>48問</b></div><div className="stat"><span>診断結果</span><b>64タイプ</b></div><div className="stat"><span>相性分析</span><b>根拠付き</b></div></div><button className="primary" onClick={()=>start(true)}>無料で診断する<span>→</span></button>{answeredCount>0&&<button className="resume" onClick={()=>start(false)}>前回の続きから再開する（{answeredCount}/48）</button>}<p className="privacyNote">登録不要・診断データはこの端末内だけに保存されます。</p></motion.section>}
- {screen==='quiz'&&<motion.section className="page" key={`q-${index}`} initial={{opacity:0,x:24}} animate={{opacity:1,x:0}} exit={{opacity:0,x:-18}}><div className="quizTop"><span>QUESTION {String(index+1).padStart(2,'0')}</span><span>{Math.round((index+1)/48*100)}%</span></div><div className="progress"><div className="progressBar" style={{width:`${(index+1)/48*100}%`}}/></div><div className="guide" style={{'--accent':current.axis.character.accent} as React.CSSProperties}><CharacterImage character={current.axis.character} className="guideImage"/><div><small>{current.axis.character.role}</small><b>{current.axis.character.name}が案内します</b><span>{current.axis.character.line}</span></div></div><div className="questionNumber">{index+1}<span>/48</span></div><h2 className="question">{current.text}</h2><div className="answers">{options.map((o,n)=><motion.button whileTap={{scale:.985}} className="answer" key={o[1]} onClick={()=>answer(o[1])}><span className="answerIndex">{String.fromCharCode(65+n)}</span><span>{o[0]}</span><span className="answerArrow">→</span></motion.button>)}</div><div className="actions"><button className="ghost" disabled={index===0} onClick={()=>setIndex(Math.max(0,index-1))}>← 前へ戻る</button><button className="ghost" onClick={()=>setScreen('home')}>中断する</button></div></motion.section>}
- {screen==='result'&&result&&<motion.section className="page resultPage" key="result" initial={{opacity:0,scale:.98}} animate={{opacity:1,scale:1}}><div className="eyebrow center">YOUR TYPE CODE</div><div className="resultBadge">ANALYSIS COMPLETE</div><div className="resultCode">{result.code}</div><h1 className="resultTitle">{result.name}</h1><p className="muted">あなた独自の6軸バランスから分析した結果です。</p><div className="resultHero" style={{'--accent':result.navigator.accent} as React.CSSProperties}><CharacterImage character={result.navigator}/><div><small>MATCHED NAVIGATOR</small><b>{result.navigator.name}との一致度が高いタイプ</b><p>{result.summary}</p></div></div>
- <h2 className="sectionTitle">6軸の詳細分析</h2><div className="profileList">{result.profile.map(p=><article className="profileCard" key={p.axis.key}><div className="axisHead"><b>{p.label}</b><span>{p.rate}%</span></div><div className="track"><div className="fill" style={{width:`${Math.max(8,p.rate)}%`}}/></div><p>{p.text}</p></article>)}</div>
- <div className="resultGrid"><article className="resultCard"><h3>強み</h3><ul>{result.strengths.map(x=><li key={x}>{x}</li>)}</ul></article><article className="resultCard"><h3>陥りやすい罠</h3><ul>{result.risks.map(x=><li key={x}>{x}</li>)}</ul></article><article className="resultCard"><h3>ストレス時</h3><p>{result.stress}</p></article><article className="resultCard"><h3>恋愛傾向</h3><p>{result.love}</p></article><article className="resultCard"><h3>仕事適性</h3><p>{result.work}</p></article><article className="resultCard"><h3>成長ポイント</h3><p>{result.growth}</p></article></div>
- <h2 className="sectionTitle">相性が良いTYPE CODE TOP 3</h2><p className="sectionLead">価値観、生活テンポ、感情の扱い、補完性、衝突リスクから総合判定しています。</p><div className="matchList">{result.matches.map((m,i)=><article className="matchCard" key={m.code}><div className="matchTop"><span className="rank">{i+1}</span><div><b>{m.code}</b><h3>{m.name}</h3></div><strong>{m.score}<small>%</small></strong></div><h4>相性が良い根拠</h4><ul>{m.reasons.map(r=><li key={r}>{r}</li>)}</ul><div className="matchNotes"><p><b>注意点</b>{m.caution}</p><p><b>関係を良くするコツ</b>{m.tip}</p></div></article>)}</div>
- <button className="primary" onClick={share}>結果をシェアする<span>↗</span></button><button className="resume" onClick={()=>start(true)}>もう一度診断する</button></motion.section>}
- </AnimatePresence></div></div></main>
+
+ function start(fresh=true){
+  if(fresh){setIndex(0);setAnswers(Array(48).fill(null));setResult(null);localStorage.removeItem(STORAGE_KEY)}
+  setScreen('quiz');scrollTo({top:0,behavior:'smooth'});
+ }
+
+ function answer(value:number){
+  const next=[...answers];next[index]=value;setAnswers(next);
+  navigator.vibrate?.(18);
+  if(index===47){setResult(calculate(next));setScreen('result');localStorage.removeItem(STORAGE_KEY);scrollTo({top:0,behavior:'smooth'})}
+  else setIndex(index+1);
+ }
+
+ async function buyPremium(){
+  setPaying(true);setPaymentMessage('');
+  try{
+   const response=await fetch('/api/create-checkout-session',{method:'POST'});
+   const data=await response.json();
+   if(!response.ok||!data.url)throw new Error(data.error||'決済を開始できませんでした。');
+   location.href=data.url;
+  }catch(error){setPaymentMessage(error instanceof Error?error.message:'決済を開始できませんでした。');setPaying(false)}
+ }
+
+ function share(){
+  if(!result)return;
+  const text=`私のTYPE CODEは ${result.code}「${result.name}」でした。\n#TYPECODE`;
+  if(navigator.share)navigator.share({title:'TYPE CODE',text,url:location.href}).catch(()=>{});
+  else navigator.clipboard.writeText(`${text}\n${location.href}`).then(()=>alert('結果をコピーしました'));
+ }
+
+ return <main className="app"><div className="ambient ambientOne"/><div className="ambient ambientTwo"/><div className="shell">
+  <header className="brand"><span className="brandMark">TC</span><span>TYPE CODE</span></header>
+  {paymentMessage&&<div className={`paymentNotice ${premium?'success':''}`}>{paymentMessage}</div>}
+  <div className="panel"><AnimatePresence mode="wait">
+   {screen==='home'&&<motion.section className="page" key="home" initial={{opacity:0,y:18}} animate={{opacity:1,y:0}} exit={{opacity:0,y:-12}}>
+    <div className="eyebrow">64 PERSONALITY TYPES</div>
+    <h1 className="heroTitle">人は、<br/><strong>16タイプだけ</strong>では<br/>表せない。</h1>
+    <p className="lead">6人のナビゲーターと48問を進み、思考・行動・対人傾向を6軸で分析。相性まで根拠付きで読み解きます。</p>
+    <div className="heroStage"><div className="heroGlow"/><div className="heroCharacterRow">{characters.map((c,i)=><motion.div key={c.name} initial={{opacity:0,y:20}} animate={{opacity:1,y:0}} transition={{delay:.07*i}}><CharacterImage character={c} className="heroCharacter"/></motion.div>)}</div><div className="heroCaption"><span>MEET THE NAVIGATORS</span><b>6つの視点で、あなたを読み解く。</b></div></div>
+    <div className="characterGrid">{characters.map(c=><div className="characterCard" key={c.name}><CharacterImage character={c}/><div><b>{c.name}</b><span>{c.role}</span></div></div>)}</div>
+    <div className="stats"><div className="stat"><span>質問数</span><b>48問</b></div><div className="stat"><span>診断結果</span><b>64タイプ</b></div><div className="stat"><span>詳細分析</span><b>買い切り200円</b></div></div>
+    <button className="primary" onClick={()=>start(true)}>無料で診断する<span>→</span></button>
+    {answeredCount>0&&<button className="resume" onClick={()=>start(false)}>前回の続きから再開する（{answeredCount}/48）</button>}
+    <p className="privacyNote">診断とTYPE CODEの確認は無料。詳細分析のみ200円の買い切りです。</p>
+   </motion.section>}
+
+   {screen==='quiz'&&<motion.section className="page" key={`q-${index}`} initial={{opacity:0,x:24}} animate={{opacity:1,x:0}} exit={{opacity:0,x:-18}}>
+    <div className="quizTop"><span>QUESTION {String(index+1).padStart(2,'0')}</span><span>{Math.round((index+1)/48*100)}%</span></div>
+    <div className="progress"><div className="progressBar" style={{width:`${(index+1)/48*100}%`}}/></div>
+    <div className="guide" style={{'--accent':current.axis.character.accent} as React.CSSProperties}><CharacterImage character={current.axis.character} className="guideImage"/><div><small>{current.axis.character.role}</small><b>{current.axis.character.name}が案内します</b><span>{current.axis.character.line}</span></div></div>
+    <div className="questionNumber">{index+1}<span>/48</span></div>
+    <h2 className="question">{current.text}</h2>
+    <div className="answers">{options.map((o,n)=><motion.button whileTap={{scale:.985}} className="answer" key={o[1]} onClick={()=>answer(o[1])}><span className="answerIndex">{String.fromCharCode(65+n)}</span><span className="answerLabel">{o[0]}</span><span className="answerArrow">→</span></motion.button>)}</div>
+    <div className="actions"><button className="ghost" disabled={index===0} onClick={()=>setIndex(Math.max(0,index-1))}>← 前へ戻る</button><button className="ghost" onClick={()=>setScreen('home')}>中断する</button></div>
+   </motion.section>}
+
+   {screen==='result'&&result&&<motion.section className="page resultPage" key="result" initial={{opacity:0,scale:.98}} animate={{opacity:1,scale:1}}>
+    <div className="eyebrow center">YOUR TYPE CODE</div><div className="resultBadge">ANALYSIS COMPLETE</div>
+    <div className="resultCode">{result.code}</div><h1 className="resultTitle">{result.name}</h1>
+    <p className="muted">あなた独自の6軸バランスから分析した結果です。</p>
+    <div className="resultHero" style={{'--accent':result.navigator.accent} as React.CSSProperties}><CharacterImage character={result.navigator}/><div><small>MATCHED NAVIGATOR</small><b>{result.navigator.name}との一致度が高いタイプ</b><p>{result.summary}</p></div></div>
+
+    {!premium&&<>
+     <div className="freePreview"><span>無料結果</span><h2>あなたの中心傾向</h2><p>{result.summary}</p><div className="previewAxes">{result.profile.slice(0,2).map(p=><div key={p.axis.key}><b>{p.label}</b><span>{p.rate}%</span></div>)}</div></div>
+     <section className="paywall">
+      <div className="paywallIcon">✓</div><div className="eyebrow center">ONE-TIME PURCHASE</div>
+      <h2>詳細分析をすべて解除</h2><div className="price"><strong>200</strong><span>円</span></div>
+      <p>月額料金なし。1回の購入で、この端末から詳細結果を何度でも確認できます。</p>
+      <div className="unlockGrid"><span>6軸の詳細解説</span><span>強み・弱み</span><span>恋愛・仕事適性</span><span>ストレス反応</span><span>相性TOP3</span><span>相性の根拠と注意点</span></div>
+      <button className="primary purchaseButton" disabled={paying} onClick={buyPremium}>{paying?'決済ページを準備中…':'200円で詳細を見る'}<span>→</span></button>
+      <small>Stripeの安全な決済画面へ移動します。買い切り・追加課金なし。</small>
+     </section>
+    </>}
+
+    {premium&&<>
+     <div className="premiumBadge">PREMIUM UNLOCKED</div>
+     <h2 className="sectionTitle">6軸の詳細分析</h2>
+     <div className="profileList">{result.profile.map(p=><article className="profileCard" key={p.axis.key}><div className="axisHead"><b>{p.label}</b><span>{p.rate}%</span></div><div className="track"><div className="fill" style={{width:`${Math.max(8,p.rate)}%`}}/></div><p>{p.text}</p></article>)}</div>
+     <div className="resultGrid"><article className="resultCard"><h3>強み</h3><ul>{result.strengths.map(x=><li key={x}>{x}</li>)}</ul></article><article className="resultCard"><h3>陥りやすい罠</h3><ul>{result.risks.map(x=><li key={x}>{x}</li>)}</ul></article><article className="resultCard"><h3>ストレス時</h3><p>{result.stress}</p></article><article className="resultCard"><h3>恋愛傾向</h3><p>{result.love}</p></article><article className="resultCard"><h3>仕事適性</h3><p>{result.work}</p></article><article className="resultCard"><h3>成長ポイント</h3><p>{result.growth}</p></article></div>
+     <h2 className="sectionTitle">相性が良いTYPE CODE TOP 3</h2>
+     <p className="sectionLead">価値観、生活テンポ、感情の扱い、補完性、衝突リスクから総合判定しています。</p>
+     <div className="matchList">{result.matches.map((m,i)=><article className="matchCard" key={m.code}><div className="matchTop"><span className="rank">{i+1}</span><div><b>{m.code}</b><h3>{m.name}</h3></div><strong>{m.score}<small>%</small></strong></div><h4>相性が良い根拠</h4><ul>{m.reasons.map(r=><li key={r}>{r}</li>)}</ul><div className="matchNotes"><p><b>注意点</b>{m.caution}</p><p><b>関係を良くするコツ</b>{m.tip}</p></div></article>)}</div>
+    </>}
+
+    <button className="primary" onClick={share}>結果をシェアする<span>↗</span></button>
+    <button className="resume" onClick={()=>start(true)}>もう一度診断する</button>
+   </motion.section>}
+  </AnimatePresence></div>
+ </div></main>;
 }
