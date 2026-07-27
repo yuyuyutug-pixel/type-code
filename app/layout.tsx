@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
+import './labels.css';
 
 export const metadata: Metadata = {
   title: 'TYPE CODE | 64タイプ性格診断',
