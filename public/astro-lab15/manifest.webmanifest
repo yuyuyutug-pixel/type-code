@@ -6,13 +6,5 @@
   "scope": "/astro-lab15/",
   "display": "standalone",
   "background_color": "#050a14",
-  "theme_color": "#071022",
-  "icons": [
-    {
-      "src": "/astro-lab15/icon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
-    }
-  ]
+  "theme_color": "#071022"
 }
