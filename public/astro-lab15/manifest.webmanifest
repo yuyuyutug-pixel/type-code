@@ -1,0 +1,18 @@
+{
+  "name": "ASTRO LAB 15",
+  "short_name": "ASTRO15",
+  "description": "USD/JPY +15s demo research lab",
+  "start_url": "/astro-lab15/index.html",
+  "scope": "/astro-lab15/",
+  "display": "standalone",
+  "background_color": "#050a14",
+  "theme_color": "#071022",
+  "icons": [
+    {
+      "src": "/astro-lab15/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
