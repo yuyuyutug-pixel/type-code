@@ -1,5 +1,82 @@
 eSettings').onclick=()=>{S.settings.payout=clamp(Number($('payout').value)||2.05,1.01,10);S.settings.margin=clamp((Number($('margin').value)||0)/100,0,.25);S.settings.calFresh=clamp(Number($('calFresh').value)||60,10,3600);saveLocal();renderPerformance();toast('設定を保存しました')};$('savePin').onclick=()=>{const p=$('newPin').value.trim();if(p&&!/^\d{4}$/.test(p)){toast('PINは4桁の数字');return}if(p)localStorage.setItem('astroPin',p);else localStorage.removeItem('astroPin');$('newPin').value='';toast(p?'PINを設定しました':'PINを解除しました')};$('exportJson').onclick=backup;$('importJson').onchange=e=>{if(e.target.files[0])restore(e.target.files[0]);e.target.value=''};$('resetData').onclick=async()=>{if(!confirm('履歴・モデル・同期データをこの端末から削除します。よろしいですか？'))return;await DB.clearAll();S.forecasts=[];S.cals=[];S.manual=[];S.model={weights:new Array(10).fill(0),bias:0,n:0,lr:.025,l2:.0004};saveLocal();renderAll();toast('端末データを初期化しました')};document.addEventListener('visibilitychange',()=>{if(document.hidden){S._hiddenAt=Date.now()}else if(S._hiddenAt){const end=Date.now();if(end-S._hiddenAt>1500)S.hiddenGaps.push({start:S._hiddenAt,end});S._hiddenAt=null;S.lastForecastAt=end;renderLive()}})}
-window.addEventListener('beforeunload',()=>{try{S.ws?.close()}catch{}});init();
+window.addEventListener('beforeunload',()=>{try{S.ws?.close()}catch{}});
+/* v0.2 audit hardening: independent horizons, source purity, truthful settlement timing */
+function resetForSourceChange(next){
+ if(S.provider===next)return;
+ const now=Date.now();
+ S.sessionStart=now;
+ S.lastForecastAt=now;
+ S.model={weights:new Array(10).fill(0),bias:0,n:0,lr:.025,l2:.0004,lastTrainAt:0};
+ S.hiddenGaps.push({start:now-16000,end:now+16000});
+ for(const f of S.forecasts){
+  if(f.status==='pending'){f.status='invalid';f.invalidReason='provider source changed';DB.put('forecasts',f).catch(()=>{})}
+ }
+ saveLocal();
+}
+const startSimulationBase=startSimulation;
+startSimulation=function(){resetForSourceChange('SIMULATED');return startSimulationBase()};
+const connectTwelveBase=connectTwelve;
+connectTwelve=function(){if($('apiKey').value.trim())resetForSourceChange('TWELVE_DATA');return connectTwelveBase()};
+
+matureForecasts=async function(now=Date.now()){
+ const pending=S.forecasts.filter(f=>f.status==='pending'&&now>=f.targetAt);
+ for(const r of pending){
+  const invalid=r.source!==S.provider||r.createdAt<S.sessionStart||hasGap(r.createdAt,r.targetAt);
+  if(invalid){r.status='invalid';r.invalidReason='source switch or timing gap';await DB.put('forecasts',r);continue}
+  const tk=S.ticks.find(x=>x.t>=r.targetAt&&x.t<=r.targetAt+1500&&x.s===r.source);
+  if(!tk){
+   if(now<r.targetAt+1700)continue;
+   r.status='invalid';r.invalidReason='no post-expiry tick';await DB.put('forecasts',r);continue
+  }
+  r.future=tk.p;r.actual=classify(r.entry,r.future);r.status='matured';r.settledAt=tk.t;
+  r.pred=r.score>=.5?'UP':'DOWN';
+  r.correct=r.actual!=='TIE'&&r.pred===r.actual;
+  r.tie=r.actual==='TIE';
+  await DB.put('forecasts',r);
+  if(r.actual!=='TIE'&&r.quality>=60&&r.createdAt>=(S.model.lastTrainAt||0)+15000){
+   S.model.lastTrainAt=r.createdAt;
+   updateModel(r.vector,r.actual==='UP'?1:0)
+  }
+ }
+};
+
+providerPerf=function(){
+ const data=S.forecasts.filter(x=>x.status==='matured'&&x.source===S.provider).sort((a,b)=>a.createdAt-b.createdAt);
+ const a=[];let last=-Infinity;
+ for(const r of data){if(r.createdAt>=last+15000){a.push(r);last=r.createdAt}}
+ const wins=a.filter(x=>x.correct).length;
+ const subset=a.slice(-100);
+ return {a,n:a.length,wins,hit:a.length?wins/a.length:0,
+  tie:a.length?a.filter(x=>x.tie).length/a.length:0,
+  roll100:subset.length?subset.filter(x=>x.correct).length/subset.length:0,
+  maxLoss:maxLosing(a.map(x=>!!x.correct)),wilson:wilson(wins,a.length)}
+};
+
+const syncCalibrationBase=syncCalibration;
+syncCalibration=async function(){
+ const raw=$('astroPriceInput').value.trim();
+ if(!/^\d{2,3}\.\d{3}$/.test(raw)||Number(raw)<50||Number(raw)>300){
+  toast('ASTRO表示の3桁価格を入力（例 158.159）');return
+ }
+ return syncCalibrationBase()
+};
+const saveManualBase=saveManual;
+saveManual=async function(){
+ const raw=$('manualEntry').value.trim();
+ if(!/^\d{2,3}\.\d{3}$/.test(raw)||Number(raw)<50||Number(raw)>300){
+  toast('ASTROエントリー価格を3桁で入力');return
+ }
+ // The original result button is tapped ~15s after the entry, not at entry time.
+ const target=Date.now()-15000;
+ const candidate=S.forecasts.filter(x=>x.source!=='SIMULATED')
+   .sort((a,b)=>Math.abs(a.createdAt-target)-Math.abs(b.createdAt-target))[0];
+ if(!candidate||Math.abs(candidate.createdAt-target)>2500){
+  toast('対応する15秒前の実データがありません。参考記録として保存します。')
+ }
+ return saveManualBase()
+};
+
+init();
 </script>
 </body>
 </html>
