@@ -1,27 +1,134 @@
-/* ASTRO LAB 15 · v0.6 · local-only quote observer; never places orders */
-(function(){
-'use strict';
-if(!/(^|\.)astro\.space$/i.test(location.hostname)){alert('ASTROの取引画面で起動してください');return;}
-try{if(window.__astro15Stop)window.__astro15Stop()}catch(e){}
-var prior=document.getElementById('astro15-lite');if(prior)prior.remove();
-var panel=document.createElement('div');panel.id='astro15-lite';panel.style.cssText='position:fixed;z-index:2147483647;right:8px;top:44%;width:216px;max-width:75vw;touch-action:pan-y';
-panel.innerHTML=`<div style="font:12px/1.5 -apple-system,BlinkMacSystemFont,'Hiragino Sans',sans-serif;color:#fff;background:#081a2ff5;border:1px solid #56cdf9;border-radius:14px;overflow:hidden;box-shadow:0 12px 34px #000b"><div id="a15-drag" style="background:#174866;padding:8px 9px;display:flex;justify-content:space-between;align-items:center;touch-action:none"><b>15秒研究室 <small>v0.6</small></b><span><button id="a15-min" style="background:transparent;color:#fff;border:0;font-size:19px">－</button><button id="a15-close" style="background:transparent;color:#fff;border:0;font-size:20px">×</button></span></div><div id="a15-main" style="padding:10px"><div id="a15-price" style="font-size:27px;letter-spacing:1px;font-weight:850">---.---</div><div id="a15-state" style="font-size:14px;color:#ffc86c;font-weight:800">自動検出中</div><div id="a15-msg" style="color:#c2d7e7;font-size:11px;margin:5px 0 8px">ASTRO中央の価格を探しています</div><button id="a15-confirm" style="display:none;width:100%;min-height:40px;border:0;border-radius:9px;background:#17b792;color:#fff;font-weight:800">この価格で監視する</button><button id="a15-pick" style="width:100%;min-height:38px;margin-top:5px;border:1px solid #3c6684;border-radius:9px;background:#164169;color:#fff;font-size:12px">表示価格が違う場合</button><div id="a15-diff" style="font-size:11px;color:#9ee2f2;margin-top:7px">3秒差 --- ｜15秒差 ---</div><div style="font-size:10px;color:#8fb3ca;margin-top:7px">表示値の監視のみ。注文操作なし。予測精度は未検証。</div></div></div>`;
-document.body.appendChild(panel);
-var $=id=>panel.querySelector('#'+id),chosen=null,pending=null,confirmed=false,pointMode=false,lastPrice=null,lastChange=0,history=[],scanAt=0,changedAt=0,refresh=0,stopped=false,lost=false;
-function state(label,msg,color){$('a15-state').textContent=label;$('a15-msg').textContent=msg;$('a15-state').style.color=color||'#ffc86c';}
-function candidate(el){if(!el||panel.contains(el))return null;var t=(el.textContent||'').trim(),m=t.match(/^(\d{2,3}\.\d{3})(?:\s*[▲▼↑↓+−-])?$/);if(!m)return null;var v=+m[1];if(v<50||v>300)return null;var sty=getComputedStyle(el),fs=parseFloat(sty.fontSize)||0,r=el.getBoundingClientRect();if(fs<24||sty.display==='none'||sty.visibility==='hidden'||r.width<24||r.height<15||r.bottom<=0||r.top>=innerHeight)return null;var cx=(r.left+r.right)/2,cy=(r.top+r.bottom)/2;if(Math.abs(cx-innerWidth*.5)>innerWidth*.34||cy<innerHeight*.12||cy>innerHeight*.67)return null;return {el,p:v,font:fs,x:cx,y:cy,score:fs*6-Math.abs(cx-innerWidth*.5)*.25-Math.abs(cy-innerHeight*.26)*.12};}
-function findQuote(){var walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT),node,items=[],count=0,seen=new Set();while((node=walker.nextNode())&&count++<2500){var t=(node.nodeValue||'').trim();if(t.length<5||t.length>22||!/\d{2,3}\.\d{3}/.test(t))continue;var el=node.parentElement;for(var k=0;el&&k<2;k++,el=el.parentElement){if(seen.has(el))continue;seen.add(el);var q=candidate(el);if(q)items.push(q)}}items.sort((a,b)=>b.score-a.score);return items[0]||null;}
-function mark(q){pending=q;$('a15-price').textContent=q?q.p.toFixed(3):'---.---';$('a15-confirm').style.display=q?'block':'none';if(q)state('価格の確認待ち','中央の価格と同じなら緑のボタンを押す');else state(lost?'取得停止':'価格を検出できません',lost?'監視していた価格が消えました。再確認が必要':'画面の数字が画像描画の可能性があります');}
-function choose(q){lost=false;chosen=q.el;confirmed=true;pending=null;lastPrice=null;lastChange=Date.now();history=[];$('a15-confirm').style.display='none';$('a15-pick').textContent='価格を選び直す';update();}
-function prev(ms){var now=Date.now(),target=now-ms;for(var i=history.length-1;i>=0;i--)if(history[i].t<=target&&target-history[i].t<2500)return history[i].p;return null;}
-function update(){if(stopped||document.hidden)return;var now=Date.now();if(pointMode)return;if(confirmed){if(!chosen||!chosen.isConnected){confirmed=false;chosen=null;lastPrice=null;pending=null;lost=true;state('取得停止','価格表示が入れ替わりました。再確認が必要');$('a15-price').textContent='---.---';$('a15-diff').textContent='3秒差 --- ｜15秒差 ---';return;}var q=candidate(chosen);if(!q){confirmed=false;chosen=null;pending=null;lastPrice=null;lost=true;state('取得停止','価格の要素が読めません。再確認してください');return;}if(lastPrice===null||lastPrice!==q.p){lastChange=now;lastPrice=q.p;history.push({t:now,p:q.p});history=history.filter(x=>now-x.t<24000)}$('a15-price').textContent=q.p.toFixed(3);if(now-lastChange>3500)state('更新なし・見送り','表示値が3.5秒以上変化していません');else state('監視中','ASTRO画面の価格変化を追跡中','#6cf0c5');var d3=prev(3000),d15=prev(15000);$('a15-diff').textContent='3秒差 '+(d3===null?'---':(q.p-d3).toFixed(3))+' ｜15秒差 '+(d15===null?'---':(q.p-d15).toFixed(3));return;}
-if(now-scanAt<650)return;scanAt=now;var found=findQuote();if(found){if(!pending||pending.el!==found.el||pending.p!==found.p)mark(found);else $('a15-price').textContent=found.p.toFixed(3);}else if(!pending){mark(null);}}
-$('a15-confirm').onclick=function(){if(!pending)return;var q=candidate(pending.el);if(!q){mark(null);return;}choose(q);};
-$('a15-pick').onclick=function(){confirmed=false;chosen=null;pending=null;lastPrice=null;pointMode=true;panel.style.pointerEvents='none';state('タップで指定','ASTRO中央の大きな数字を1回タップ');$('a15-confirm').style.display='none';setTimeout(()=>{if(pointMode){pointMode=false;panel.style.pointerEvents='auto';scanAt=0;state('再検出中','タップが取れなくても自動検出します');update()}},10000);};
-function onPoint(e){if(!pointMode)return;var x=e.touches?e.touches[0].clientX:e.clientX,y=e.touches?e.touches[0].clientY:e.clientY;if(!Number.isFinite(x)||!Number.isFinite(y))return;pointMode=false;panel.style.pointerEvents='auto';e.preventDefault();e.stopPropagation();if(e.stopImmediatePropagation)e.stopImmediatePropagation();var el=document.elementFromPoint(x,y),q=null;for(var n=0;el&&n<4;n++,el=el.parentElement){q=candidate(el);if(q)break;}if(q){choose(q)}else{pending=null;scanAt=0;state('タップ位置を確認','そこは価格として読めません。自動検出を試します');update()}}
-window.addEventListener('pointerdown',onPoint,true);window.addEventListener('touchstart',onPoint,{capture:true,passive:false});window.addEventListener('click',onPoint,true);
-function stop(){stopped=true;clearInterval(refresh);window.removeEventListener('pointerdown',onPoint,true);window.removeEventListener('touchstart',onPoint,true);window.removeEventListener('click',onPoint,true);panel.remove();delete window.__astro15Stop}
-$('a15-close').onclick=stop;$('a15-min').onclick=function(){var el=$('a15-main');el.style.display=el.style.display==='none'?'block':'none';};
-var drag=null,bar=$('a15-drag');bar.addEventListener('pointerdown',e=>{if(e.target.closest('button'))return;drag={x:e.clientX,y:e.clientY,left:panel.getBoundingClientRect().left,top:panel.getBoundingClientRect().top};bar.setPointerCapture(e.pointerId)});bar.addEventListener('pointermove',e=>{if(!drag)return;panel.style.left=Math.max(0,Math.min(innerWidth-panel.offsetWidth,drag.left+e.clientX-drag.x))+'px';panel.style.top=Math.max(0,Math.min(innerHeight-70,drag.top+e.clientY-drag.y))+'px';panel.style.right='auto'});bar.addEventListener('pointerup',()=>drag=null);
-window.__astro15Stop=stop;refresh=setInterval(update,350);update();
+/* ASTRO 15秒研究室 v0.7 | visual price observer only | no orders, no requests */
+(function () {
+  'use strict';
+  if (!/(^|\.)astro\.space$/i.test(location.hostname)) {
+    alert('ASTROの取引画面で起動してください'); return;
+  }
+  if (window.__astroLab15 && window.__astroLab15.stop) window.__astroLab15.stop();
+  var old = document.getElementById('astro15-v07'); if (old) old.remove();
+  var panel = document.createElement('div'); panel.id = 'astro15-v07';
+  panel.style.cssText = 'position:fixed!important;z-index:2147483647!important;top:53%!important;left:8px!important;width:215px!important;max-width:68vw!important;touch-action:pan-y!important;pointer-events:auto!important';
+  var ui = panel.attachShadow({mode:'open'});
+  ui.innerHTML = `<style>
+  :host{all:initial}*{box-sizing:border-box}article{color:#eef8ff;background:#071929f6;font:12px/1.45 -apple-system,BlinkMacSystemFont,'Hiragino Sans',sans-serif;border:1px solid #51d7ee;border-radius:15px;overflow:hidden;box-shadow:0 12px 36px #000b}header{background:#134763;padding:8px;display:flex;justify-content:space-between;align-items:center;touch-action:none}header b{font-size:12px}button{font:inherit;color:#fff;background:#1c4c70;border:1px solid #3d7594;border-radius:9px;min-height:44px;padding:7px;cursor:pointer}header button{min-height:32px;min-width:30px;background:transparent;border:0;font-size:17px;padding:1px}main{padding:11px}.price{font-size:29px;font-weight:820;letter-spacing:1px;line-height:1.2;font-variant-numeric:tabular-nums}.status{font-size:15px;font-weight:850;color:#ffc766;margin-top:4px}.detail{color:#a9cde1;margin-top:6px;font-size:11px}.deltas{color:#95e4f2;margin-top:9px;border-top:1px solid #24475a;padding-top:7px}.buttons{display:flex;gap:6px;margin-top:10px}.buttons button{flex:1}.note{font-size:10px;color:#799db7;margin-top:9px}.mini{padding:8px 10px;display:none}.info{display:none;font-size:10px;color:#b9dce9;white-space:pre-line;border-top:1px solid #274c65;margin-top:9px;padding-top:8px}.ok{color:#58ecc4}.warn{color:#ffc766}.bad{color:#ff929d}</style>
+  <article><header id='drag'><b>15秒研究室 <small>v0.7</small></b><div><button id='min' aria-label='最小化'>－</button><button id='close' aria-label='閉じる'>×</button></div></header>
+  <main id='main'><div class='price' id='price'>---.---</div><div class='status' id='state'>価格を探しています</div><div class='detail' id='msg'>ASTRO中央の価格を自動検出中</div><div class='deltas' id='delta'>3秒差 --- ｜15秒差 ---</div><div class='buttons'><button id='retry'>再検出</button><button id='diag'>診断</button></div><div class='info' id='info'></div><div class='note'>ASTRO画面の表示文字だけを監視。取得できなければ停止。自動注文・勝率保証なし。</div></main>
+  <div class='mini' id='mini'><b id='miniText'>15秒研究室</b> <button id='restore'>開く</button></div></article>`;
+  document.body.appendChild(panel);
+  var $=id=>ui.getElementById(id);
+  var chosen=null, lastPrice=null, lastChange=0, ticks=[], scanCount=0, duplicate=0, status='SEARCH', reason='', misses=0, moved=0, lastPosition=null, interval=0, alive=true, hiddenSince=0, attempted=0;
+  var max=Math.max, min=Math.min;
+  function visible(el) {
+    if(!el || panel.contains(el) || el.closest('#astro15-v07')) return false;
+    var st=getComputedStyle(el),r=el.getBoundingClientRect();
+    return st.display!=='none' && st.visibility!=='hidden' && +st.opacity!==0 && r.width>25 && r.height>16 && r.bottom>innerHeight*.09 && r.top<innerHeight*.69 && r.right>0 && r.left<innerWidth;
+  }
+  function clean(s){return String(s||'').replace(/[\s\u00a0\u200b]/g,'').replace(/[▲▼△▽↑↓↗↘＋+−-]+$/g,'');}
+  function priceOf(s) {var m=clean(s).match(/^(\d{2,3}\.\d{3})$/);if(!m)return null;var n=Number(m[1]);return n>=50&&n<=300?n:null;}
+  function describe(el){
+    if(!visible(el))return null;
+    var raw=el.textContent||'',val=priceOf(raw);if(val===null)return null;
+    var st=getComputedStyle(el),size=parseFloat(st.fontSize)||0;
+    for(var ch of el.children||[]) if(ch.children.length<3)size=max(size,parseFloat(getComputedStyle(ch).fontSize)||0);
+    if(size<24)return null;
+    var r=el.getBoundingClientRect(), cx=(r.left+r.right)/2,cy=(r.top+r.bottom)/2;
+    if(cx<innerWidth*.16||cx>innerWidth*.84||cy<innerHeight*.13||cy>innerHeight*.61)return null;
+    var score=size*6-Math.abs(cx-innerWidth*.5)*.28-Math.abs(cy-innerHeight*.28)*.18;
+    if(r.width>innerWidth*.86)score-=35;
+    return {el:el,price:val,x:cx,y:cy,font:size,score:score};
+  }
+  function candidates(){
+    var found=[],seen=new Set(),list=document.querySelectorAll('span,div,p,b,strong,h1,h2,h3,output,text');
+    var total=min(3000,list.length);scanCount=total;
+    for(var i=0;i<total;i++){
+      var el=list[i]; if(seen.has(el)||panel.contains(el))continue;
+      var raw=el.textContent||'';if(raw.length>32||raw.length<6)continue;
+      if(!/(\d{2,3})\s*\.\s*(\d{3})/.test(raw))continue;
+      var c=describe(el);if(c){found.push(c);seen.add(el);}
+    }
+    found.sort((a,b)=>b.score-a.score);
+    // Ignore nested duplicate DOM candidates representing exactly the same visual price.
+    var distinct=[];
+    for(var x of found){if(!distinct.some(y=>Math.abs(x.x-y.x)<12 && Math.abs(x.y-y.y)<12 && x.price===y.price))distinct.push(x);}
+    duplicate=distinct.length;
+    return distinct;
+  }
+  function setState(s,message){status=s;reason=message;$('state').textContent=s;$('state').className='status '+(s==='価格取得中'?'ok':s==='取得停止'?'bad':'warn');$('msg').textContent=message;}
+  function resetSamples(){ticks=[];lastPrice=null;lastChange=0;}
+  function bind(q){chosen=q;lastPosition={x:q.x,y:q.y,font:q.font};resetSamples();misses=0;moved++;setState('価格取得中','ASTROの表示値を監視。3秒・15秒のデータ収集中');}
+  function selectBest(){
+    var choices=candidates();if(!choices.length)return null;
+    var best=choices[0];
+    if(choices.length>1&&Math.abs(choices[0].score-choices[1].score)<15&&choices[0].price!==choices[1].price)return null;
+    return best;
+  }
+  function recover(){
+    var choices=candidates();
+    if(!choices.length)return false;
+    var picked=choices[0];
+    // Auto-recover only near the same screen position and font size, not from chart axis labels.
+    if(lastPosition){picked=choices.find(c=>Math.abs(c.x-lastPosition.x)<95&&Math.abs(c.y-lastPosition.y)<80&&Math.abs(c.font-lastPosition.font)<22);}
+    if(!picked)return false;
+    chosen=picked;lastPosition={x:picked.x,y:picked.y,font:picked.font};moved++;misses=0;return true;
+  }
+  function lookup(ms,now){var target=now-ms;for(var i=ticks.length-1;i>=0;i--){if(ticks[i].t<=target && target-ticks[i].t<2400)return ticks[i].p;}return null;}
+  function update(){
+    if(!alive||document.hidden)return;
+    var now=Date.now();
+    if(!chosen){
+      if(now-attempted<900)return;attempted=now;
+      var found=selectBest();if(!found){
+        setState(lastPosition?'取得停止':'取得待ち',document.querySelectorAll('canvas').length?'中央の価格をHTMLとして検出できません。画像描画の可能性があります。':'中央価格の文字が見つかりません。診断で確認できます。');return;
+      }
+      if(lastPosition && (Math.abs(found.x-lastPosition.x)>95 || Math.abs(found.y-lastPosition.y)>80 || Math.abs(found.font-lastPosition.font)>22)){
+        setState('取得停止','以前の価格と位置が異なります。別の数字へ自動切替しません。');return;
+      }bind(found);
+    }
+    var current=describe(chosen.el);
+    if(!current||Math.abs(current.x-lastPosition.x)>95||Math.abs(current.y-lastPosition.y)>80){
+      misses++;
+      if(misses<3)return;
+      if(now-attempted<900){setState('取得待ち','画面更新中。価格要素を確認しています');return;}
+      attempted=now;
+      if(!recover()){
+        chosen=null;resetSamples();setState('取得停止','価格の表示方式が変わりました。誤った数字を使わず停止しています。');$('price').textContent='---.---';$('delta').textContent='3秒差 --- ｜15秒差 ---';return;
+      }
+      current=describe(chosen.el);
+    }
+    if(!current)return;
+    misses=0;
+    var n=current.price;
+    if(lastPrice!==null && Math.abs(n-lastPrice)>.15){
+      chosen=null;resetSamples();setState('取得停止','価格が不自然に飛んだため停止。別の数字を読んだ可能性があります。');return;
+    }
+    if(lastPrice!==n){lastPrice=n;lastChange=now;ticks.push({t:now,p:n});if(ticks.length>700)ticks.shift();}
+    ticks=ticks.filter(t=>now-t.t<35000);
+    $('price').textContent=n.toFixed(3);
+    var age=now-lastChange;
+    if(age>3500)setState('取得待ち','表示値が3.5秒以上変わっていません。判定に使用しません。');
+    else if(ticks.length<3 || now-ticks[0].t<15000)setState('価格取得中','ASTRO価格を追跡中。履歴を収集中');
+    else setState('価格取得中','表示値を追跡中（最終変化 '+(age/1000).toFixed(1)+'秒前）');
+    var t3=lookup(3000,now),t15=lookup(15000,now);
+    $('delta').textContent='3秒差 '+(t3===null?'---':(n-t3).toFixed(3))+' ｜15秒差 '+(t15===null?'---':(n-t15).toFixed(3));
+    $('miniText').textContent=n.toFixed(3)+' ｜'+status;
+  }
+  function detail(){
+    var canvas=document.querySelectorAll('canvas').length,iframes=document.querySelectorAll('iframe').length;
+    $('info').textContent='検査した要素 '+scanCount+'\n中央価格候補 '+duplicate+'\nCanvas '+canvas+'個 / iframe '+iframes+'個\n監視データ '+ticks.length+'件\n検出再接続 '+max(0,moved-1)+'回\n状態 '+status+'\n'+reason+'\n\n※ 勝率・売買方向はまだ計算しません。';
+    $('info').style.display=$('info').style.display==='block'?'none':'block';
+  }
+  function stop(){alive=false;clearInterval(interval);document.removeEventListener('visibilitychange',visibility);panel.remove();delete window.__astroLab15;}
+  function visibility(){if(document.hidden)hiddenSince=Date.now();else if(hiddenSince){resetSamples();hiddenSince=0;setState('取得待ち','Safari復帰後の古い値は使わず再収集します');}}
+  $('retry').onclick=()=>{chosen=null;lastPosition=null;resetSamples();attempted=0;misses=0;setState('再検出中','ASTRO中央の価格を探します');update();};
+  $('diag').onclick=detail;
+  $('close').onclick=stop;
+  $('min').onclick=()=>{$('main').style.display='none';$('mini').style.display='block';};
+  $('restore').onclick=()=>{$('mini').style.display='none';$('main').style.display='block';};
+  var dragging=null,bar=$('drag');
+  bar.addEventListener('pointerdown',e=>{if(e.target.closest('button'))return;dragging={x:e.clientX,y:e.clientY,left:panel.getBoundingClientRect().left,top:panel.getBoundingClientRect().top};bar.setPointerCapture(e.pointerId);});
+  bar.addEventListener('pointermove',e=>{if(!dragging)return;panel.style.left=max(0,min(innerWidth-panel.offsetWidth,dragging.left+e.clientX-dragging.x))+'px';panel.style.top=max(0,min(innerHeight-90,dragging.top+e.clientY-dragging.y))+'px';panel.style.right='auto';});
+  bar.addEventListener('pointerup',()=>dragging=null);
+  document.addEventListener('visibilitychange',visibility);
+  window.__astroLab15={stop:stop,update:update};
+  interval=setInterval(update,240);update();
 })();
