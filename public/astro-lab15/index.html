@@ -17,8 +17,8 @@ html,body{margin:0;background:#050a14;color:#f4f7ff;font-family:-apple-system,Bl
 <script>
 (async()=>{
 try{
-const parts=await Promise.all([1,2,3,4,5].map(n=>fetch('./chunks/'+n+'.txt',{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error('chunk '+n);return r.text()})));
-const rest=await fetch('./chunks/rest.txt',{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error('rest');return r.text()});
+const parts=await Promise.all([1,2,3,4,5,6].map(n=>fetch('./chunks/'+n+'.txt',{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error('chunk '+n);return r.text()})));
+const rest=await fetch('./chunks/tail.txt',{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error('tail');return r.text()});
 const bin=atob(parts.join('').replace(/\s+/g,''));
 let html=new TextDecoder().decode(Uint8Array.from(bin,c=>c.charCodeAt(0)))+rest;
 html=html.replace('href="/manifest.webmanifest"','href="./manifest.webmanifest"')
