@@ -1,33 +1,284 @@
 <!doctype html>
 <html lang="ja">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#071022">
-<title>ASTRO LAB 15</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+<meta name="theme-color" content="#071022" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="ASTRO LAB 15" />
+<link rel="manifest" href="./manifest.webmanifest" />
+
+
+<title>ASTRO LAB 15 — USD/JPY +15s Research</title>
 <style>
-html,body{margin:0;background:#050a14;color:#f4f7ff;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Noto Sans JP",sans-serif}
-.boot{min-height:100svh;display:grid;place-items:center;padding:24px;text-align:center}
-.spin{width:28px;height:28px;border:2px solid #20355d;border-top-color:#4fe0ff;border-radius:50%;animation:s 1s linear infinite;margin:0 auto 14px}
-@keyframes s{to{transform:rotate(360deg)}}.small{color:#8ea2c6;font-size:12px;margin-top:8px}
+:root{
+  --bg:#050a14;--bg2:#081226;--panel:#0b1730;--panel2:#0e1c38;--line:#1c2e52;
+  --text:#f4f7ff;--muted:#8ea2c6;--muted2:#60769d;--cyan:#4fe0ff;--blue:#5d78ff;
+  --green:#35e2a2;--red:#ff557d;--amber:#ffc857;--violet:#ad8cff;--shadow:0 18px 55px rgba(0,0,0,.36);
+  --safe-t:env(safe-area-inset-top,0px);--safe-b:env(safe-area-inset-bottom,0px)
+}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Hiragino Sans","Noto Sans JP",sans-serif;-webkit-font-smoothing:antialiased}body{overflow-x:hidden}
+button,input,select,textarea{font:inherit;color:inherit}button{cursor:pointer}.app{max-width:520px;margin:0 auto;min-height:100vh;padding:calc(var(--safe-t) + 14px) 14px calc(92px + var(--safe-b));background:radial-gradient(800px 460px at 50% -120px,rgba(59,97,255,.28),transparent 62%),linear-gradient(180deg,var(--bg2),var(--bg) 40%)}
+.header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin:2px 2px 15px}.brand{font-size:19px;font-weight:840;letter-spacing:.04em}.sub{margin-top:3px;color:var(--muted);font-size:11px;letter-spacing:.1em}.status-pill{display:flex;align-items:center;gap:7px;min-height:32px;padding:0 10px;border:1px solid var(--line);border-radius:999px;background:rgba(11,23,48,.75);color:var(--muted);font-size:11px;white-space:nowrap}.dot{width:7px;height:7px;border-radius:50%;background:var(--amber);box-shadow:0 0 12px currentColor}.dot.ok{background:var(--green)}.dot.bad{background:var(--red)}
+.panel{background:linear-gradient(180deg,rgba(14,28,56,.96),rgba(8,19,40,.96));border:1px solid rgba(99,132,194,.18);border-radius:22px;box-shadow:var(--shadow);overflow:hidden}.panel+.panel{margin-top:12px}.pad{padding:16px}.eyebrow{text-transform:uppercase;letter-spacing:.14em;font-size:10px;color:var(--muted)}.row{display:flex;align-items:center}.between{justify-content:space-between}.gap8{gap:8px}.gap12{gap:12px}.muted{color:var(--muted)}.small{font-size:12px}.tiny{font-size:10px}.mono{font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1}.price{font-size:48px;line-height:1;font-weight:820;letter-spacing:-.035em}.price-wrap{padding:18px 16px 8px}.delta.up{color:var(--green)}.delta.down{color:var(--red)}.badge{display:inline-flex;align-items:center;justify-content:center;min-height:25px;padding:0 9px;border:1px solid var(--line);border-radius:999px;font-size:10px;letter-spacing:.07em;color:var(--muted)}.badge.sim{color:var(--violet);border-color:rgba(173,140,255,.35);background:rgba(173,140,255,.08)}.badge.live{color:var(--green);border-color:rgba(53,226,162,.35);background:rgba(53,226,162,.08)}.badge.warn{color:var(--amber);border-color:rgba(255,200,87,.35);background:rgba(255,200,87,.08)}
+.chart{height:122px;padding:0 10px 4px}.chart svg{width:100%;height:100%;display:block}.chart-line{fill:none;stroke:url(#g);stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}.chart-area{fill:url(#area)}.zero-line{stroke:rgba(142,162,198,.15);stroke-width:1;stroke-dasharray:3 5}
+.state-card{padding:17px}.state-head{display:flex;align-items:flex-start;justify-content:space-between}.state-name{font-size:27px;font-weight:850;letter-spacing:.01em}.state-name.high{color:var(--green)}.state-name.low{color:var(--red)}.state-name.wait{color:var(--amber)}.grade{width:47px;height:47px;border:1px solid var(--line);border-radius:15px;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:850;background:rgba(255,255,255,.025)}.score-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:17px}.score{padding:13px;border:1px solid rgba(99,132,194,.15);border-radius:16px;background:rgba(3,9,20,.38)}.score strong{display:block;font-size:27px;margin-top:5px}.score.high strong{color:var(--green)}.score.low strong{color:var(--red)}.bar{height:5px;border-radius:5px;background:#132342;margin-top:8px;overflow:hidden}.fill{height:100%;border-radius:5px;background:linear-gradient(90deg,var(--blue),var(--cyan));transition:width .3s}.score.high .fill{background:linear-gradient(90deg,#1ea66e,var(--green))}.score.low .fill{background:linear-gradient(90deg,#c6375c,var(--red))}.meta-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:11px}.meta{padding:10px;border:1px solid rgba(99,132,194,.12);border-radius:13px;background:rgba(4,11,24,.34)}.meta b{display:block;margin-top:4px;font-size:13px}.guard{margin-top:11px;padding:10px 12px;border:1px solid rgba(255,200,87,.18);border-radius:13px;background:rgba(255,200,87,.045);color:#d8c38d;font-size:11px;line-height:1.55}
+.section-title{font-size:13px;font-weight:760}.features{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}.feature{padding:11px 12px;border:1px solid rgba(99,132,194,.13);background:rgba(4,11,24,.33);border-radius:14px;min-width:0}.feature .name{font-size:10px;color:var(--muted)}.feature .val{margin-top:5px;font-size:14px;font-weight:720;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.feature .val.pos{color:var(--green)}.feature .val.neg{color:var(--red)}
+.nav{position:fixed;z-index:50;left:0;right:0;bottom:0;padding:7px 8px max(8px,var(--safe-b));background:rgba(4,9,19,.92);backdrop-filter:blur(18px);border-top:1px solid rgba(99,132,194,.16)}.nav-inner{max-width:520px;margin:auto;display:grid;grid-template-columns:repeat(5,1fr);gap:4px}.nav-btn{min-width:44px;min-height:58px;border:0;border-radius:14px;background:transparent;color:var(--muted2);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:10px}.nav-btn .ico{font-size:18px;line-height:1}.nav-btn.active{color:var(--cyan);background:rgba(79,224,255,.07)}
+.view{display:none}.view.active{display:block}.page-title{font-size:26px;margin:4px 2px 14px;font-weight:850}.page-lead{color:var(--muted);font-size:12px;line-height:1.7;margin:-7px 2px 14px}.form-group{margin-top:13px}.label{display:block;font-size:11px;color:var(--muted);margin-bottom:7px}.input,.select,.textarea{width:100%;min-height:46px;border:1px solid var(--line);background:#071328;border-radius:13px;padding:10px 12px;outline:none}.textarea{min-height:80px;resize:vertical}.input:focus,.textarea:focus,.select:focus{border-color:#466db6;box-shadow:0 0 0 3px rgba(93,120,255,.1)}.btn{min-height:46px;border:1px solid var(--line);border-radius:13px;padding:0 14px;background:#10213f;color:var(--text);font-weight:720}.btn.primary{background:linear-gradient(135deg,#355cff,#5e7cff);border-color:transparent}.btn.good{background:rgba(53,226,162,.1);border-color:rgba(53,226,162,.28);color:var(--green)}.btn.bad{background:rgba(255,85,125,.09);border-color:rgba(255,85,125,.27);color:var(--red)}.btn.ghost{background:transparent}.btn.full{width:100%}.btn:active{transform:translateY(1px)}.btn:disabled{opacity:.42;cursor:not-allowed}.button-row{display:flex;gap:8px;flex-wrap:wrap}.button-row .btn{flex:1}.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.stat{padding:13px;border:1px solid rgba(99,132,194,.14);background:rgba(4,11,24,.3);border-radius:15px}.stat .k{font-size:10px;color:var(--muted)}.stat .v{font-size:21px;font-weight:800;margin-top:5px}.divider{height:1px;background:rgba(99,132,194,.13);margin:15px 0}.notice{padding:11px 12px;border-radius:13px;border:1px solid rgba(93,120,255,.22);background:rgba(93,120,255,.07);color:#bac9ec;font-size:11px;line-height:1.65}.notice.danger{border-color:rgba(255,85,125,.25);background:rgba(255,85,125,.055);color:#e5a9b7}.table{width:100%;border-collapse:collapse;font-size:11px}.table th{color:var(--muted);font-weight:600;text-align:left;padding:9px 5px;border-bottom:1px solid var(--line)}.table td{padding:10px 5px;border-bottom:1px solid rgba(99,132,194,.1);vertical-align:top}.history-scroll{overflow:auto;max-height:52vh}.tabs{display:flex;gap:6px;overflow:auto;padding-bottom:4px}.chip{border:1px solid var(--line);background:transparent;color:var(--muted);border-radius:999px;min-height:34px;padding:0 12px;white-space:nowrap;font-size:11px}.chip.active{color:var(--cyan);border-color:rgba(79,224,255,.35);background:rgba(79,224,255,.06)}.footer{text-align:center;color:#4f6488;font-size:10px;padding:18px 4px 3px}.kv{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid rgba(99,132,194,.1);font-size:12px}.kv:last-child{border-bottom:0}.kv span:first-child{color:var(--muted)}.progress{height:7px;background:#10213c;border-radius:99px;overflow:hidden}.progress>div{height:100%;background:linear-gradient(90deg,var(--blue),var(--cyan));transition:width .3s}.explainer{position:fixed;inset:0;z-index:100;background:rgba(2,6,14,.92);backdrop-filter:blur(18px);display:flex;align-items:center;justify-content:center;padding:22px}.explainer.hidden{display:none}.ex-card{width:min(440px,100%);border:1px solid #25395f;border-radius:26px;background:linear-gradient(180deg,#0d1b36,#071124);padding:24px;box-shadow:0 25px 80px rgba(0,0,0,.6)}.ex-num{font-size:11px;color:var(--cyan);letter-spacing:.12em}.ex-title{font-size:25px;line-height:1.25;margin:12px 0 10px}.ex-body{color:var(--muted);line-height:1.75;font-size:13px}.ex-dots{display:flex;gap:7px;margin:22px 0 14px}.ex-dot{width:22px;height:4px;border-radius:3px;background:#223456}.ex-dot.on{background:var(--cyan)}.toast{position:fixed;z-index:120;left:50%;bottom:calc(84px + var(--safe-b));transform:translateX(-50%) translateY(15px);opacity:0;transition:.2s;pointer-events:none;background:#111f39;border:1px solid #2a436f;color:var(--text);border-radius:13px;padding:10px 14px;font-size:12px;box-shadow:var(--shadow);max-width:88vw}.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}.lock{position:fixed;inset:0;z-index:110;background:#050a14;display:none;align-items:center;justify-content:center;padding:24px}.lock.show{display:flex}.lock-card{width:min(390px,100%);text-align:center}.lock-title{font-size:24px;font-weight:850}.pin-dots{letter-spacing:.35em;font-size:28px;margin:17px 0}.pin-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.pin-grid button{min-height:55px;border:1px solid var(--line);border-radius:14px;background:#0b1730;font-size:18px}.switch{position:relative;width:48px;height:28px;border-radius:99px;background:#1b2c4a;border:1px solid #2a4269;display:inline-block;vertical-align:middle}.switch input{opacity:0;width:0;height:0}.knob{position:absolute;left:3px;top:3px;width:20px;height:20px;border-radius:50%;background:#8799b9;transition:.2s}.switch input:checked+.knob{left:23px;background:var(--cyan)}
+@media(min-width:480px){.app{padding-left:18px;padding-right:18px}.features{grid-template-columns:repeat(3,1fr)}}
 </style>
 </head>
 <body>
-<div class="boot"><div><div class="spin"></div><b>ASTRO LAB 15</b><div class="small">Research engine loading…</div></div></div>
+<div id="explainer" class="explainer hidden" aria-modal="true" role="dialog">
+  <div class="ex-card">
+    <div id="exNum" class="ex-num">01 / 03</div>
+    <h2 id="exTitle" class="ex-title"></h2>
+    <div id="exBody" class="ex-body"></div>
+    <div id="exDots" class="ex-dots"></div>
+    <button id="exNext" class="btn primary full">次へ</button>
+  </div>
+</div>
+<div id="lock" class="lock"><div class="lock-card"><div class="eyebrow">PRIVATE LOCAL LOCK</div><div class="lock-title">ASTRO LAB 15</div><div class="small muted" style="margin-top:8px">この端末のPINを入力</div><div id="pinDots" class="pin-dots">○ ○ ○ ○</div><div id="pinGrid" class="pin-grid"></div><button id="pinClear" class="btn ghost full" style="margin-top:8px">消去</button></div></div>
+<main class="app">
+  <header class="header">
+    <div><div class="brand">ASTRO LAB 15</div><div class="sub">USD/JPY · +15s · DEMO RESEARCH</div></div>
+    <div id="connPill" class="status-pill"><span id="connDot" class="dot"></span><span id="connTxt">起動中</span></div>
+  </header>
+
+  <section id="view-live" class="view active">
+    <div class="panel">
+      <div class="price-wrap">
+        <div class="row between gap8"><div class="row gap8"><span id="providerBadge" class="badge sim">SIMULATED</span><span class="badge">15s HORIZON</span></div><div id="tickAge" class="tiny muted mono">-- ms</div></div>
+        <div class="row between" style="align-items:end;margin-top:13px"><div><div class="eyebrow">EXTERNAL REFERENCE</div><div id="mainPrice" class="price mono">158.000</div></div><div id="mainDelta" class="small mono delta">±0.000</div></div>
+      </div>
+      <div class="chart"><svg id="spark" viewBox="0 0 480 120" preserveAspectRatio="none"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#5d78ff"/><stop offset="1" stop-color="#4fe0ff"/></linearGradient><linearGradient id="area" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4fe0ff" stop-opacity=".18"/><stop offset="1" stop-color="#4fe0ff" stop-opacity="0"/></linearGradient></defs><line class="zero-line" x1="0" y1="60" x2="480" y2="60"/><path id="sparkArea" class="chart-area" d=""/><path id="sparkLine" class="chart-line" d=""/></svg></div>
+    </div>
+
+    <div class="panel" style="margin-top:12px"><div class="state-card">
+      <div class="state-head"><div><div class="eyebrow">RESEARCH STATE</div><div id="stateName" class="state-name wait">WARMUP</div><div id="stateReason" class="small muted" style="margin-top:4px">データを蓄積中</div></div><div id="grade" class="grade">—</div></div>
+      <div class="score-grid"><div class="score high"><div class="eyebrow">HIGH MODEL SCORE</div><strong id="highScore" class="mono">50.0</strong><div class="bar"><div id="highBar" class="fill" style="width:50%"></div></div></div><div class="score low"><div class="eyebrow">LOW MODEL SCORE</div><strong id="lowScore" class="mono">50.0</strong><div class="bar"><div id="lowBar" class="fill" style="width:50%"></div></div></div></div>
+      <div class="meta-grid"><div class="meta"><div class="eyebrow">TIE RISK</div><b id="tieRisk" class="mono">--%</b></div><div class="meta"><div class="eyebrow">QUALITY</div><b id="quality" class="mono">--/100</b></div><div class="meta"><div class="eyebrow">VALIDATED N</div><b id="validN" class="mono">0</b></div></div>
+      <div id="guardBox" class="guard">90秒のウォームアップ中。実測サンプルが成熟するまで強い評価は出しません。</div>
+    </div></div>
+
+    <div class="panel"><div class="pad"><div class="row between"><div class="section-title">Microstructure features</div><div class="tiny muted">更新 1s</div></div><div id="featureGrid" class="features"></div></div></div>
+
+    <div class="panel"><div class="pad"><div class="row between"><div><div class="section-title">Calibration health</div><div id="calStatus" class="small muted" style="margin-top:4px">ASTROデモ価格との同期なし</div></div><button class="btn" data-go="cal">同期へ</button></div></div></div>
+    <div class="footer">ASTRO LAB 15 · v0.1.0 Research Build · <span id="engineStatus">ENGINE CHECK</span></div>
+  </section>
+
+  <section id="view-cal" class="view">
+    <h1 class="page-title">Calibration</h1><p class="page-lead">外部レートとASTROデモ表示価格のズレを手動同期します。補正は表示・検証用で、ASTROの判定価格を制御するものではありません。</p>
+    <div class="panel"><div class="pad"><div class="section-title">価格同期</div><div class="form-group"><label class="label">現在のASTRO表示 USD/JPY（3桁）</label><input id="astroPriceInput" class="input mono" inputmode="decimal" placeholder="例 158.159" /></div><div class="button-row" style="margin-top:10px"><button id="syncBtn" class="btn primary">Sync now</button><button id="fillPriceBtn" class="btn">外部値を入力</button></div><div class="divider"></div><div class="stat-grid"><div class="stat"><div class="k">SYNC COUNT</div><div id="syncN" class="v mono">0</div></div><div class="stat"><div class="k">LAST DELTA</div><div id="lastDelta" class="v mono">--</div></div><div class="stat"><div class="k">MEDIAN DELTA</div><div id="medianDelta" class="v mono">--</div></div><div class="stat"><div class="k">MAD / DRIFT</div><div id="madDrift" class="v mono" style="font-size:15px">-- / --</div></div></div><div id="calWarning" class="notice" style="margin-top:12px">同期データはまだありません。</div><div class="form-group row between"><div><div class="label" style="margin:0">表示オフセットを適用</div><div class="tiny muted">可視化だけに反映</div></div><label class="switch"><input id="applyOffset" type="checkbox"><span class="knob"></span></label></div></div></div>
+    <div class="panel"><div class="pad"><div class="section-title">ASTROデモ結果を記録</div><p class="small muted">実際のASTRO側グラウンドトゥルース。外部フィード成績とは分離して集計します。</p><div class="form-group"><label class="label">ASTROエントリー価格</label><input id="manualEntry" class="input mono" inputmode="decimal" placeholder="158.162" /></div><div class="form-group"><label class="label">方向</label><select id="manualDir" class="select"><option>HIGH</option><option>LOW</option></select></div><div class="form-group"><label class="label">結果</label><div class="button-row"><button class="btn good result-btn" data-result="WIN">WIN</button><button class="btn bad result-btn" data-result="LOSS">LOSS</button><button class="btn result-btn" data-result="TIE">TIE</button></div></div><div class="form-group"><label class="label">メモ（任意）</label><textarea id="manualNote" class="textarea" placeholder="約定遅延、急変、表示差など"></textarea></div><button id="saveManual" class="btn primary full" disabled>結果を保存</button></div></div>
+    <div class="footer">手動データだけがASTROデモ確認済み成績になります。</div>
+  </section>
+
+  <section id="view-perf" class="view">
+    <h1 class="page-title">Performance</h1><p class="page-lead">Provider walk-forward と ASTROデモ確認済みを混ぜずに評価します。2.05xの損益分岐は48.7805%。</p>
+    <div class="panel"><div class="pad"><div class="row between"><div><div class="section-title">Provider / Simulation walk-forward</div><div class="tiny muted">自動 +15s ラベル</div></div><span id="providerSourceBadge" class="badge sim">SIM</span></div><div id="providerStats" class="stat-grid" style="margin-top:12px"></div><div class="divider"></div><div id="providerExtra"></div></div></div>
+    <div class="panel"><div class="pad"><div class="row between"><div><div class="section-title">ASTRO demo confirmed</div><div class="tiny muted">手動グラウンドトゥルース</div></div><span id="edgeBadge" class="badge warn">NOT VALIDATED</span></div><div id="manualStats" class="stat-grid" style="margin-top:12px"></div><div id="manualEdge" class="notice" style="margin-top:12px"></div></div></div>
+    <div class="panel"><div class="pad"><div class="section-title">Score buckets</div><div id="bucketTable" style="margin-top:8px"></div></div></div>
+  </section>
+
+  <section id="view-history" class="view">
+    <h1 class="page-title">History</h1><p class="page-lead">監査可能な履歴。予測・成熟ラベル・同期・ASTROデモ結果を端末内に保存します。</p>
+    <div class="panel"><div class="pad"><div class="tabs" id="histTabs"><button class="chip active" data-filter="all">すべて</button><button class="chip" data-filter="forecast">予測</button><button class="chip" data-filter="manual">ASTRO結果</button><button class="chip" data-filter="cal">同期</button></div><div class="form-group"><input id="histSearch" class="input" placeholder="検索（時刻、方向、結果、メモ）" /></div><div class="button-row" style="margin-top:9px"><button id="exportCsv" class="btn">CSV書き出し</button><button id="refreshHist" class="btn">更新</button></div><div class="history-scroll" style="margin-top:10px"><table class="table"><thead><tr><th>時刻</th><th>種別</th><th>内容</th></tr></thead><tbody id="historyBody"></tbody></table></div></div></div>
+  </section>
+
+  <section id="view-settings" class="view">
+    <h1 class="page-title">Settings</h1><p class="page-lead">外部レート接続と検証条件。APIキー・履歴・モデル状態はこの端末に保存し、当アプリのサーバーへは送信しません。</p>
+    <div class="panel"><div class="pad"><div class="section-title">Market data</div><div class="form-group"><label class="label">Twelve Data API key（local only）</label><input id="apiKey" class="input" type="password" autocomplete="off" placeholder="API key" /></div><div class="button-row" style="margin-top:9px"><button id="connectBtn" class="btn primary">接続 / テスト</button><button id="simBtn" class="btn">SIMに戻す</button></div><div id="providerMsg" class="notice" style="margin-top:11px">APIキー未設定時はSIMULATEDで動作します。</div></div></div>
+    <div class="panel"><div class="pad"><div class="section-title">Validation rules</div><div class="form-group"><label class="label">ペイアウト倍率</label><input id="payout" class="input mono" type="number" step="0.01" min="1.01" value="2.05" /></div><div class="form-group"><label class="label">安全マージン（%pt）</label><input id="margin" class="input mono" type="number" step="0.1" min="0" value="2.0" /></div><div class="form-group"><label class="label">Calibration freshness（秒）</label><input id="calFresh" class="input mono" type="number" step="5" min="10" value="60" /></div><div class="kv"><span>研究ホライズン</span><b>+15.0s（固定）</b></div><button id="saveSettings" class="btn primary full" style="margin-top:12px">設定を保存</button></div></div>
+    <div class="panel"><div class="pad"><div class="section-title">Private local lock</div><div class="small muted" style="margin-top:5px">4桁PINはこの端末だけに保存。強固なサーバー認証ではありません。</div><div class="form-group"><input id="newPin" class="input mono" inputmode="numeric" maxlength="4" placeholder="4桁PIN（空欄で解除）" /></div><button id="savePin" class="btn full">PIN設定</button></div></div>
+    <div class="panel"><div class="pad"><div class="section-title">Data backup</div><div class="button-row" style="margin-top:10px"><button id="exportJson" class="btn">JSONバックアップ</button><label class="btn" style="display:flex;align-items:center;justify-content:center">JSON復元<input id="importJson" type="file" accept="application/json" hidden /></label></div><button id="resetData" class="btn bad full" style="margin-top:10px">端末データを初期化</button></div></div>
+    <div class="panel"><div class="pad"><div class="section-title">Compliance / scope</div><div class="notice danger" style="margin-top:10px">DEMO / RESEARCH ONLY。ASTROへログイン・接続・スクレイピング・注文送信・自動売買をしません。外部価格とASTROの発行者決定価格は一致しない場合があります。Model scoreは利益・勝率の保証ではありません。</div></div></div>
+    <div class="footer">ASTRO LAB 15 · v0.1.0 Research Build</div>
+  </section>
+</main>
+
+<nav class="nav"><div class="nav-inner"><button class="nav-btn active" data-view="live"><span class="ico">⌁</span><span>Live</span></button><button class="nav-btn" data-view="cal"><span class="ico">◎</span><span>Calibrate</span></button><button class="nav-btn" data-view="perf"><span class="ico">▥</span><span>Performance</span></button><button class="nav-btn" data-view="history"><span class="ico">≡</span><span>History</span></button><button class="nav-btn" data-view="settings"><span class="ico">⚙</span><span>Settings</span></button></div></nav>
+<div id="toast" class="toast"></div>
 <script>
-(async()=>{
-try{
-const parts=await Promise.all([1,2,3,4,5,6].map(n=>fetch('./chunks/'+n+'.txt',{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error('chunk '+n);return r.text()})));
-const rest=await fetch('./chunks/tail.txt',{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error('tail');return r.text()});
-const bin=atob(parts.join('').replace(/\s+/g,''));
-let html=new TextDecoder().decode(Uint8Array.from(bin,c=>c.charCodeAt(0)))+rest;
-html=html.replace('href="/manifest.webmanifest"','href="./manifest.webmanifest"')
-.replace('<link rel="icon" href="/icon.svg" type="image/svg+xml" />','')
-.replace('<link rel="apple-touch-icon" href="/icon.svg" />','')
-.replace("register('/sw.js')","register('./sw.js')");
-document.open();document.write(html);document.close();
-}catch(e){document.body.innerHTML='<div class="boot"><div><b>ASTRO LAB 15</b><p style="color:#ff557d">起動データの読込に失敗しました。再読み込みしてください。</p></div></div>';console.error(e)}
-})();
+'use strict';
+const VERSION='0.1.0';
+const HORIZON=15000, FORECAST_EVERY=1000, MAX_GAP=3000, MODEL_MIN=60, FULL_GRADE_N=300;
+const $=id=>document.getElementById(id); const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
+const round3=x=>Math.round((x+Number.EPSILON)*1000)/1000;
+const fmt=(x,d=3)=>Number.isFinite(x)?Number(x).toFixed(d):'--';
+const median=a=>{if(!a.length)return NaN;const b=[...a].sort((x,y)=>x-y),m=Math.floor(b.length/2);return b.length%2?b[m]:(b[m-1]+b[m])/2};
+const mean=a=>a.length?a.reduce((s,x)=>s+x,0)/a.length:0;
+const stdev=a=>{if(a.length<2)return 0;const m=mean(a);return Math.sqrt(mean(a.map(x=>(x-m)**2)))};
+const sigmoid=x=>1/(1+Math.exp(-clamp(x,-30,30)));
+function wilson(w,n,z=1.95996398454){if(!n)return 0;const p=w/n,zz=z*z,d=1+zz/n,c=p+zz/(2*n),m=z*Math.sqrt((p*(1-p)+zz/(4*n))/n);return (c-m)/d}
+function classify(a,b){a=round3(a);b=round3(b);return b>a?'UP':b<a?'DOWN':'TIE'}
+function breakEven(payout){return 1/Math.max(1.000001,payout)}
+function download(name,text,type='text/plain'){const b=new Blob([text],{type});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),2000)}
+function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toast.t);toast.t=setTimeout(()=>t.classList.remove('show'),2200)}
+function haptic(ms=12){try{navigator.vibrate?.(ms)}catch{}}
+
+const DB={db:null, async open(){if(this.db)return this.db;return new Promise((res,rej)=>{const r=indexedDB.open('astro-lab-15',2);r.onupgradeneeded=()=>{const d=r.result;['forecasts','calibrations','manual'].forEach(n=>{if(!d.objectStoreNames.contains(n))d.createObjectStore(n,{keyPath:'id'})});};r.onsuccess=()=>{this.db=r.result;res(this.db)};r.onerror=()=>rej(r.error)})}, async put(store,obj){const d=await this.open();return new Promise((res,rej)=>{const tx=d.transaction(store,'readwrite');tx.objectStore(store).put(obj);tx.oncomplete=()=>res(obj);tx.onerror=()=>rej(tx.error)})}, async all(store){const d=await this.open();return new Promise((res,rej)=>{const r=d.transaction(store).objectStore(store).getAll();r.onsuccess=()=>res(r.result||[]);r.onerror=()=>rej(r.error)})}, async clearAll(){const d=await this.open();return Promise.all(['forecasts','calibrations','manual'].map(s=>new Promise((res,rej)=>{const tx=d.transaction(s,'readwrite');tx.objectStore(s).clear();tx.oncomplete=res;tx.onerror=()=>rej(tx.error)})))}};
+
+const S={
+ ticks:[], provider:'SIMULATED', connected:true,lastTickAt:0,lastPrice:158.159,prevPrice:158.159,sessionStart:Date.now(),hiddenGaps:[],forecasts:[],manual:[],cals:[],selectedResult:null,histFilter:'all',
+ settings:{payout:2.05,margin:0.02,calFresh:60,apiKey:'',applyOffset:false},
+ model:{weights:new Array(10).fill(0),bias:0,n:0,lr:.025,l2:.0004}, ws:null, reconnectTimer:null, simTimer:null, lastForecastAt:0, lastFeatureAt:0, feature:null, modelScore:.5,tieRisk:.25,quality:0,state:'WARMUP',reason:'データを蓄積中',grade:'—', currentView:'live'
+};
+
+function loadLocal(){try{const st=JSON.parse(localStorage.getItem('astroLabSettings')||'{}');Object.assign(S.settings,st);const m=JSON.parse(localStorage.getItem('astroLabModel')||'null');if(m&&Array.isArray(m.weights)&&m.weights.length===10)S.model=Object.assign(S.model,m)}catch{} $('apiKey').value=S.settings.apiKey||'';$('payout').value=S.settings.payout;$('margin').value=(S.settings.margin*100).toFixed(1);$('calFresh').value=S.settings.calFresh;$('applyOffset').checked=!!S.settings.applyOffset}
+function saveLocal(){localStorage.setItem('astroLabSettings',JSON.stringify(S.settings));localStorage.setItem('astroLabModel',JSON.stringify(S.model))}
+
+function addTick(price,ts=Date.now(),source=S.provider){if(!Number.isFinite(price)||price<50||price>300)return;S.prevPrice=S.lastPrice;S.lastPrice=price;S.lastTickAt=ts;S.ticks.push({p:price,t:ts,s:source});const cutoff=ts-125000;while(S.ticks.length&&S.ticks[0].t<cutoff)S.ticks.shift()}
+function nearestPrice(target,maxDist=1250){let best=null,bd=Infinity;for(let i=S.ticks.length-1;i>=0;i--){const d=Math.abs(S.ticks[i].t-target);if(d<bd){bd=d;best=S.ticks[i]}if(S.ticks[i].t<target-maxDist)break}return bd<=maxDist?best:null}
+function hasGap(a,b){let prev=null;for(const x of S.ticks){if(x.t<a-1000)continue;if(x.t>b+1000)break;if(prev&&x.t-prev>MAX_GAP)return true;prev=x.t}return !prev||S.hiddenGaps.some(g=>g.start<b&&g.end>a)}
+function pricesSince(ms,now=Date.now()){const t=now-ms;return S.ticks.filter(x=>x.t>=t&&x.t<=now)}
+function returnWindow(ms,now=Date.now()){const w=pricesSince(ms,now);return w.length>1?w[w.length-1].p-w[0].p:0}
+function realizedVol(ms,now=Date.now()){const w=pricesSince(ms,now);if(w.length<3)return 0;const ds=[];for(let i=1;i<w.length;i++)ds.push(w[i].p-w[i-1].p);return stdev(ds)*Math.sqrt(Math.max(1,1000/Math.max(1,mean(w.slice(1).map((x,i)=>x.t-w[i].t)))))}
+function slopeWindow(ms,now=Date.now()){const w=pricesSince(ms,now);if(w.length<3)return 0;const t0=w[0].t;const xs=w.map(x=>(x.t-t0)/1000),ys=w.map(x=>x.p);const xm=mean(xs),ym=mean(ys);let num=0,den=0;for(let i=0;i<w.length;i++){num+=(xs[i]-xm)*(ys[i]-ym);den+=(xs[i]-xm)**2}return den?num/den:0}
+function persistence(ms,now=Date.now()){const w=pricesSince(ms,now);if(w.length<3)return 0;let pos=0,neg=0;for(let i=1;i<w.length;i++){const d=w[i].p-w[i-1].p;if(d>0)pos++;else if(d<0)neg++}return (pos-neg)/Math.max(1,pos+neg)}
+function sma(ms,now=Date.now()){const w=pricesSince(ms,now);return w.length?mean(w.map(x=>x.p)):S.lastPrice}
+function chop(ms,now=Date.now()){const w=pricesSince(ms,now);if(w.length<3)return 1;let path=0;for(let i=1;i<w.length;i++)path+=Math.abs(w[i].p-w[i-1].p);const net=Math.abs(w[w.length-1].p-w[0].p);return path/Math.max(.00001,net)}
+function eventRate(ms=5000,now=Date.now()){return pricesSince(ms,now).length/(ms/1000)}
+function features(now=Date.now()){
+ const r1=returnWindow(1000,now),r3=returnWindow(3000,now),r5=returnWindow(5000,now),r10=returnWindow(10000,now),r15=returnWindow(15000,now),r30=returnWindow(30000,now);
+ const v5=realizedVol(5000,now),v15=realizedVol(15000,now),v30=realizedVol(30000,now),sl=slopeWindow(10000,now),pers=persistence(10000,now),acc=r3-r10*.3,d15=S.lastPrice-sma(15000,now),d30=S.lastPrice-sma(30000,now),ch=chop(15000,now),rate=eventRate(5000,now);
+ return {r1,r3,r5,r10,r15,r30,v5,v15,v30,sl,pers,acc,d15,d30,ch,rate}
+}
+function featureVector(f){return [clamp(f.r1/.003,-3,3),clamp(f.r3/.005,-3,3),clamp(f.r5/.007,-3,3),clamp(f.r10/.011,-3,3),clamp(f.r15/.014,-3,3),clamp(f.sl/.0012,-3,3),clamp(f.pers,-1,1),clamp(f.acc/.005,-3,3),clamp(f.d15/.008,-3,3),clamp((f.ch-2)/4,-2,2)]}
+function deterministic(f){let z=0;z+=f.r1/.004*.08+f.r3/.006*.13+f.r5/.008*.17+f.r10/.012*.12+f.r15/.016*.08+f.sl/.0014*.14+f.pers*.12+f.acc/.006*.08+f.d15/.01*.05;z-=Math.sign(z)*clamp((f.ch-4)/8,0,.16);return sigmoid(clamp(z,-3.3,3.3))}
+function onlineProb(x){let z=S.model.bias;for(let i=0;i<x.length;i++)z+=S.model.weights[i]*x[i];return sigmoid(z)}
+function updateModel(x,y){if(!Number.isFinite(y))return;const p=onlineProb(x),err=y-p;for(let i=0;i<x.length;i++)S.model.weights[i]+=S.model.lr*(err*x[i]-S.model.l2*S.model.weights[i]);S.model.bias+=S.model.lr*err;S.model.n++;saveLocal()}
+function tieEstimate(f){const vol=clamp(f.v15/.0015,0,3);const raw=.34*Math.exp(-vol)+.06;return clamp(raw,.035,.38)}
+function computeModel(now=Date.now()){
+ const f=features(now),x=featureVector(f),d=deterministic(f),o=onlineProb(x),blend=S.model.n>=MODEL_MIN?(.58*d+.42*o):d;S.modelScore=blend;S.tieRisk=tieEstimate(f);S.feature=f;
+ const age=now-S.lastTickAt,uptime=(now-S.sessionStart)/1000,rate=f.rate,cm=calMetrics();let q=100;if(age>600)q-=30;if(rate<2)q-=35;if(uptime<90)q-=Math.round((90-uptime)/90*25);if(f.v5>.006)q-=20;if(S.provider==='TWELVE_DATA'&&!S.connected)q=0;if(S.provider==='TWELVE_DATA'&&cm&&cm.age>S.settings.calFresh)q-=15;S.quality=clamp(Math.round(q),0,100);
+ const absBias=Math.abs(blend-.5);let state='NO-EDGE',reason='方向優位が不足';if(uptime<90){state='WARMUP';reason=`ウォームアップ残り ${Math.max(0,Math.ceil(90-uptime))}秒`}else if(age>1200){state='NO-EDGE';reason='ティックが古いためWAIT'}else if(rate<2){state='NO-EDGE';reason='イベント密度不足'}else if(f.v5>.0075){state='NO-EDGE';reason='瞬間ボラティリティ過大'}else if(S.tieRisk>.28){state='NO-EDGE';reason='3桁同値リスクが高い'}else if(S.provider==='TWELVE_DATA'&&cm&&cm.age>S.settings.calFresh){state='NO-EDGE';reason='ASTROデモ同期が古いためWAIT'}else if(absBias<.075){state='NO-EDGE';reason='モデル差が小さい'}else if(blend>.5){state='HIGH BIAS';reason='短期方向特徴が上方向に優勢'}else{state='LOW BIAS';reason='短期方向特徴が下方向に優勢'}
+ let grade='WAIT';if(state==='HIGH BIAS'||state==='LOW BIAS'){if(absBias>.17)grade=S.model.n>=FULL_GRADE_N?'A':'B';else grade='C'}if(S.model.n>=FULL_GRADE_N&&absBias>.24)grade='S';S.state=state;S.reason=reason;S.grade=grade;return {f,x,score:blend,state,grade}
+}
+async function createForecast(now=Date.now()){
+ if(now-S.lastForecastAt<FORECAST_EVERY-80)return;S.lastForecastAt=now;const m=computeModel(now);const rec={id:'f_'+now,kind:'forecast',createdAt:now,targetAt:now+HORIZON,entry:S.lastPrice,source:S.provider,score:m.score,tieRisk:S.tieRisk,quality:S.quality,state:S.state,grade:S.grade,vector:m.x,features:m.f,status:'pending',modelVersion:VERSION};S.forecasts.push(rec);if(S.forecasts.length>1500)S.forecasts.shift();await DB.put('forecasts',rec)
+}
+async function matureForecasts(now=Date.now()){
+ const pending=S.forecasts.filter(r=>r.status==='pending'&&now>=r.targetAt);for(const r of pending){if(hasGap(r.createdAt,r.targetAt)){r.status='invalid';r.invalidReason='timestamp gap/background';await DB.put('forecasts',r);continue}const tk=nearestPrice(r.targetAt,1500);if(!tk){r.status='invalid';r.invalidReason='no target tick';await DB.put('forecasts',r);continue}r.future=tk.p;r.actual=classify(r.entry,r.future);r.status='matured';r.settledAt=now;r.pred=r.score>=.5?'UP':'DOWN';r.correct=r.actual!=='TIE'&&r.pred===r.actual;r.tie=r.actual==='TIE';await DB.put('forecasts',r);if(r.actual!=='TIE')updateModel(r.vector,r.actual==='UP'?1:0)}
+}
+
+function startSimulation(){disconnectWS(false);S.provider='SIMULATED';S.connected=true;S.sessionStart=Date.now();S.ticks=[];let anchor=158.159,drift=0,vol=.00042,regimeUntil=0;const loop=()=>{if(S.provider!=='SIMULATED')return;const now=Date.now();if(now>regimeUntil){regimeUntil=now+8000+Math.random()*19000;drift=(Math.random()-.5)*.00018;vol=.00020+Math.random()*.00072;if(Math.random()<.18)vol*=2.2}const shock=(Math.random()<.018?(Math.random()-.5)*.0055:0);const meanRev=(anchor-S.lastPrice)*.012;const step=drift+meanRev+(Math.random()+Math.random()+Math.random()-1.5)*vol+shock;addTick(S.lastPrice+step,now,'SIMULATED');S.simTimer=setTimeout(loop,125+Math.random()*125)};addTick(anchor,Date.now(),'SIMULATED');loop();renderProvider();toast('SIMULATED feed started')}
+function disconnectWS(startSim=true){if(S.ws){try{S.ws.close()}catch{}S.ws=null}clearTimeout(S.reconnectTimer);clearTimeout(S.simTimer);if(startSim)startSimulation()}
+function connectTwelve(){const key=$('apiKey').value.trim();if(!key){S.settings.apiKey='';saveLocal();startSimulation();$('providerMsg').textContent='APIキーが空のためSIMULATEDで動作中。';return}S.settings.apiKey=key;saveLocal();clearTimeout(S.simTimer);if(S.ws)try{S.ws.close()}catch{};S.provider='TWELVE_DATA';S.connected=false;S.sessionStart=Date.now();S.ticks=[];$('providerMsg').textContent='Twelve Dataへ接続中…';renderProvider();let opened=false;try{const ws=new WebSocket('wss://ws.twelvedata.com/v1/quotes/price?apikey='+encodeURIComponent(key));S.ws=ws;ws.onopen=()=>{opened=true;S.connected=true;ws.send(JSON.stringify({action:'subscribe',params:{symbols:'USD/JPY'}}));$('providerMsg').textContent='接続済み。USD/JPYリアルタイム価格を受信します。';toast('Twelve Data connected');renderProvider()};ws.onmessage=e=>{try{const j=JSON.parse(e.data);const p=Number(j.price);if(Number.isFinite(p)){addTick(p,Date.now(),'TWELVE_DATA')}}catch{}};ws.onerror=()=>{$('providerMsg').textContent='接続エラー。数秒後SIMへフォールバックします。'};ws.onclose=()=>{S.connected=false;renderProvider();if(S.provider==='TWELVE_DATA')S.reconnectTimer=setTimeout(()=>{if(Date.now()-S.lastTickAt>5000){$('providerMsg').textContent='Twelve Data接続が継続しないためSIMへフォールバック。';startSimulation()}else connectTwelve()},3500)};const hb=setInterval(()=>{if(S.ws!==ws){clearInterval(hb);return}if(ws.readyState===1)try{ws.send(JSON.stringify({action:'heartbeat'}))}catch{}},10000);setTimeout(()=>{if(!opened||Date.now()-S.lastTickAt>7000){try{ws.close()}catch{};if(S.provider==='TWELVE_DATA')startSimulation()}},9000)}catch(e){$('providerMsg').textContent='WebSocketを開始できませんでした。SIMへ切替。';startSimulation()}}
+
+function appliedPrice(){if(!S.settings.applyOffset||!S.cals.length)return S.lastPrice;const deltas=S.cals.slice(-20).map(c=>c.delta);return S.lastPrice+median(deltas)}
+function calMetrics(){const c=S.cals.slice(-30);if(!c.length)return null;const ds=c.map(x=>x.delta),med=median(ds),mad=median(ds.map(x=>Math.abs(x-med)));const h=Math.max(1,Math.floor(c.length/2)),drift=c.length>=4?median(ds.slice(-h))-median(ds.slice(0,h)):0;return {n:c.length,med,mad,drift,last:c[c.length-1],age:(Date.now()-c[c.length-1].ts)/1000}}
+function renderCalibration(){const m=calMetrics();if(!m){$('syncN').textContent='0';$('lastDelta').textContent=$('medianDelta').textContent=$('madDrift').textContent='--';$('calWarning').textContent='同期データはまだありません。';return}$('syncN').textContent=m.n;$('lastDelta').textContent=(m.last.delta>=0?'+':'')+fmt(m.last.delta,3);$('medianDelta').textContent=(m.med>=0?'+':'')+fmt(m.med,3);$('madDrift').textContent=fmt(m.mad,3)+' / '+(m.drift>=0?'+':'')+fmt(m.drift,3);const risky=Math.abs(m.med)>.008||Math.abs(m.drift)>.004;$('calWarning').className='notice'+(risky?' danger':'');$('calWarning').textContent=risky?'価格差またはドリフトが大きい。ASTROデモ判定と外部レートの一致を前提にしないでください。':`最終同期 ${Math.round(m.age)}秒前。表示差は比較的安定しています。`}
+async function syncCalibration(){const a=Number($('astroPriceInput').value);if(!Number.isFinite(a)){toast('ASTRO表示価格を入力してください');return}const now=Date.now(),rec={id:'c_'+now,kind:'cal',ts:now,astro:round3(a),external:S.lastPrice,delta:round3(a)-S.lastPrice,source:S.provider};S.cals.push(rec);await DB.put('calibrations',rec);renderCalibration();renderLive();haptic();toast('価格同期を保存しました')}
+async function saveManual(){if(!S.selectedResult)return;const entry=Number($('manualEntry').value);if(!Number.isFinite(entry)){toast('ASTROエントリー価格を入力');return}const now=Date.now();let nearest=null,bd=Infinity;for(const f of S.forecasts){const d=Math.abs(f.createdAt-now);if(d<bd){bd=d;nearest=f}}const rec={id:'m_'+now,kind:'manual',ts:now,entry:round3(entry),direction:$('manualDir').value,result:S.selectedResult,note:$('manualNote').value.trim(),forecastId:nearest&&bd<30000?nearest.id:null,modelScore:nearest&&bd<30000?nearest.score:null,grade:nearest&&bd<30000?nearest.grade:null,source:'ASTRO_DEMO_MANUAL'};S.manual.push(rec);await DB.put('manual',rec);S.selectedResult=null;document.querySelectorAll('.result-btn').forEach(b=>b.style.outline='');$('saveManual').disabled=true;$('manualNote').value='';renderPerformance();haptic(20);toast('ASTROデモ結果を保存しました')}
+
+function pct(x,d=1){return Number.isFinite(x)?(x*100).toFixed(d)+'%':'--'}
+function maxLosing(seq){let m=0,c=0;for(const v of seq){if(v){c=0}else{c++;m=Math.max(m,c)}}return m}
+function providerPerf(){const a=S.forecasts.filter(x=>x.status==='matured');const nonTie=a.filter(x=>!x.tie),wins=a.filter(x=>x.correct).length;return {a,n:a.length,wins,hit:a.length?wins/a.length:0,tie:a.length?a.filter(x=>x.tie).length/a.length:0,roll100:(()=>{const z=a.slice(-100);return z.length?z.filter(x=>x.correct).length/z.length:0})(),maxLoss:maxLosing(a.map(x=>!!x.correct)),wilson:wilson(wins,a.length)}}
+function manualPerf(){const a=S.manual,wins=a.filter(x=>x.result==='WIN').length,losses=a.length-wins;return {a,n:a.length,wins,hit:a.length?wins/a.length:0,tie:a.length?a.filter(x=>x.result==='TIE').length/a.length:0,roll100:(()=>{const z=a.slice(-100);return z.length?z.filter(x=>x.result==='WIN').length/z.length:0})(),maxLoss:maxLosing(a.map(x=>x.result==='WIN')),wilson:wilson(wins,a.length),losses}}
+function statCard(k,v){return `<div class="stat"><div class="k">${k}</div><div class="v mono">${v}</div></div>`}
+function renderPerformance(){const p=providerPerf(),m=manualPerf(),be=breakEven(S.settings.payout);$('providerSourceBadge').textContent=S.provider==='TWELVE_DATA'?'PROVIDER':'SIM';$('providerSourceBadge').className='badge '+(S.provider==='TWELVE_DATA'?'live':'sim');$('providerStats').innerHTML=statCard('N',p.n)+statCard('HIT RATE',pct(p.hit))+statCard('TIE RATE',pct(p.tie))+statCard('WILSON 95% LB',pct(p.wilson));$('providerExtra').innerHTML=`<div class="kv"><span>Rolling 100</span><b>${pct(p.roll100)}</b></div><div class="kv"><span>Max losing streak</span><b>${p.maxLoss}</b></div><div class="kv"><span>Online model matured N</span><b>${S.model.n}</b></div>`;$('manualStats').innerHTML=statCard('N',m.n)+statCard('WIN RATE',pct(m.hit))+statCard('TIE RATE',pct(m.tie))+statCard('WILSON 95% LB',pct(m.wilson));const validated=m.n>=300&&m.wilson>be+S.settings.margin;$('edgeBadge').textContent=validated?'EDGE VALIDATED':'NOT VALIDATED';$('edgeBadge').className='badge '+(validated?'live':'warn');const ev=m.n?m.hit*S.settings.payout-1:NaN;$('manualEdge').className='notice'+(validated?'':'');$('manualEdge').innerHTML=`損益分岐 <b>${pct(be,2)}</b> / 安全ライン <b>${pct(be+S.settings.margin,2)}</b><br>ASTRO確認済み Wilson下限 <b>${pct(m.wilson,2)}</b>${m.n?` / 実測EV ${ev>=0?'+':''}${pct(ev,2)}`:''}<br>${m.n<300?'最低300件のASTROデモ確認済み記録までは検証中です。':validated?'統計条件を満たしています。将来の利益を保証する意味ではありません。':'統計条件を満たしていません。'}`;
+ const buckets=[[.5,.55],[.55,.6],[.6,.65],[.65,.7],[.7,.8],[.8,1.01]];let html='<table class="table"><thead><tr><th>Score</th><th>N</th><th>実測</th></tr></thead><tbody>';for(const [lo,hi] of buckets){const z=p.a.filter(r=>Math.max(r.score,1-r.score)>=lo&&Math.max(r.score,1-r.score)<hi),w=z.filter(r=>r.correct).length;html+=`<tr><td>${Math.round(lo*100)}–${Math.round(Math.min(1,hi)*100)}</td><td>${z.length}</td><td>${z.length?pct(w/z.length):'--'}</td></tr>`}html+='</tbody></table>';$('bucketTable').innerHTML=html}
+
+function renderFeatures(){const f=S.feature||features();const vals=[['1s momentum',f.r1],['3s momentum',f.r3],['5s momentum',f.r5],['10s momentum',f.r10],['15s momentum',f.r15],['30s context',f.r30],['micro slope',f.sl],['vol 5s',f.v5],['vol 15s',f.v15],['vol 30s',f.v30],['persistence',f.pers],['acceleration',f.acc],['vs SMA15',f.d15],['vs SMA30',f.d30],['chop ratio',f.ch],['event rate',f.rate]];$('featureGrid').innerHTML=vals.map(([n,v])=>{const cls=(n.includes('vol')||n.includes('chop')||n.includes('rate'))?'':v>0?'pos':v<0?'neg':'';const d=n.includes('persistence')||n.includes('chop')||n.includes('rate')?2:5;return `<div class="feature"><div class="name">${n}</div><div class="val mono ${cls}">${fmt(v,d)}</div></div>`}).join('')}
+function spark(){const now=Date.now(),w=S.ticks.filter(x=>x.t>=now-15000);if(w.length<2){$('sparkLine').setAttribute('d','');$('sparkArea').setAttribute('d','');return}const ps=w.map(x=>x.p),mn=Math.min(...ps),mx=Math.max(...ps),rng=Math.max(.0015,mx-mn),x0=w[0].t,span=Math.max(1,w[w.length-1].t-x0);const pts=w.map(t=>[(t.t-x0)/span*480,108-(t.p-mn)/rng*96]);const d=pts.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' ');$('sparkLine').setAttribute('d',d);$('sparkArea').setAttribute('d',d+` L ${pts[pts.length-1][0].toFixed(1)} 116 L ${pts[0][0].toFixed(1)} 116 Z`)}
+function renderProvider(){const live=S.provider==='TWELVE_DATA';$('providerBadge').textContent=live?'TWELVE DATA':'SIMULATED';$('providerBadge').className='badge '+(live?'live':'sim');$('connTxt').textContent=live?(S.connected?'LIVE FEED':'DISCONNECTED'):'SIM FEED';$('connDot').className='dot '+(S.connected?'ok':'bad')}
+function renderLive(){const now=Date.now();computeModel(now);const p=appliedPrice(),delta=S.lastPrice-S.prevPrice;$('mainPrice').textContent=fmt(p,3);$('mainDelta').textContent=(delta>0?'+':'')+fmt(delta,3);$('mainDelta').className='small mono delta '+(delta>0?'up':delta<0?'down':'');$('tickAge').textContent=Math.max(0,now-S.lastTickAt)+' ms';$('stateName').textContent=S.state;$('stateName').className='state-name '+(S.state==='HIGH BIAS'?'high':S.state==='LOW BIAS'?'low':'wait');$('stateReason').textContent=S.reason;$('grade').textContent=S.grade;const directional=1-S.tieRisk,hi=S.modelScore*directional,lo=(1-S.modelScore)*directional;$('highScore').textContent=(hi*100).toFixed(1);$('lowScore').textContent=(lo*100).toFixed(1);$('highBar').style.width=(hi*100)+'%';$('lowBar').style.width=(lo*100)+'%';$('tieRisk').textContent=pct(S.tieRisk);$('quality').textContent=S.quality+'/100';$('validN').textContent=S.model.n;$('guardBox').textContent=S.state==='WARMUP'?'90秒ウォームアップ中。'+S.reason+'。':S.state==='NO-EDGE'?'WAIT: '+S.reason+'。条件不足時は判定を強制しません。':S.reason+'。これは研究用バイアスで、注文指示ではありません。';const cm=calMetrics();$('calStatus').textContent=cm?`最終同期 ${Math.round(cm.age)}秒前 · median ${(cm.med>=0?'+':'')+fmt(cm.med,3)}`:'ASTROデモ価格との同期なし';spark();renderFeatures();renderProvider()}
+
+async function renderHistory(){const q=$('histSearch').value.toLowerCase();const rows=[];if(S.histFilter==='all'||S.histFilter==='forecast')S.forecasts.slice(-250).forEach(x=>rows.push({ts:x.createdAt,type:'forecast',txt:`${x.state} ${Math.round(x.score*100)} score · ${x.status}${x.actual?' · '+x.actual:''}${x.correct===true?' ✓':x.correct===false?' ✕':''}`}));if(S.histFilter==='all'||S.histFilter==='manual')S.manual.forEach(x=>rows.push({ts:x.ts,type:'manual',txt:`${x.direction} · ${x.result} · ${fmt(x.entry,3)}${x.note?' · '+x.note:''}`}));if(S.histFilter==='all'||S.histFilter==='cal')S.cals.forEach(x=>rows.push({ts:x.ts,type:'cal',txt:`ASTRO ${fmt(x.astro,3)} / ext ${fmt(x.external,3)} / Δ ${(x.delta>=0?'+':'')+fmt(x.delta,3)}`}));rows.sort((a,b)=>b.ts-a.ts);$('historyBody').innerHTML=rows.filter(r=>(r.type+' '+r.txt+' '+new Date(r.ts).toLocaleString('ja-JP')).toLowerCase().includes(q)).slice(0,300).map(r=>`<tr><td class="mono">${new Date(r.ts).toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit',second:'2-digit'})}</td><td>${r.type}</td><td>${escapeHtml(r.txt)}</td></tr>`).join('')||'<tr><td colspan="3" class="muted">履歴なし</td></tr>'}
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function exportCSV(){const lines=['timestamp,type,source,entry,future,score,state,grade,result,note'];for(const r of S.forecasts)lines.push([new Date(r.createdAt).toISOString(),'forecast',r.source,r.entry,r.future??'',r.score,r.state,r.grade,r.actual??r.status,''].map(csv).join(','));for(const r of S.manual)lines.push([new Date(r.ts).toISOString(),'manual','ASTRO_DEMO',r.entry,'',r.modelScore??'',r.direction,r.grade??'',r.result,r.note].map(csv).join(','));for(const r of S.cals)lines.push([new Date(r.ts).toISOString(),'calibration',r.source,r.astro,r.external,r.delta,'','','',''].map(csv).join(','));download('astro-lab15-'+new Date().toISOString().slice(0,10)+'.csv',lines.join('\n'),'text/csv;charset=utf-8')}
+function csv(x){const s=String(x??'');return /[,"\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s}
+async function backup(){download('astro-lab15-backup.json',JSON.stringify({version:VERSION,exportedAt:new Date().toISOString(),settings:S.settings,model:S.model,forecasts:S.forecasts,cals:S.cals,manual:S.manual},null,2),'application/json')}
+async function restore(file){try{const j=JSON.parse(await file.text());if(!j||!Array.isArray(j.forecasts))throw new Error('invalid');await DB.clearAll();S.forecasts=j.forecasts||[];S.cals=j.cals||[];S.manual=j.manual||[];if(j.settings)Object.assign(S.settings,j.settings);if(j.model&&Array.isArray(j.model.weights))Object.assign(S.model,j.model);for(const x of S.forecasts)await DB.put('forecasts',x);for(const x of S.cals)await DB.put('calibrations',x);for(const x of S.manual)await DB.put('manual',x);saveLocal();renderAll();toast('バックアップを復元しました')}catch(e){toast('JSON復元に失敗しました')}}
+
+function switchView(v){S.currentView=v;document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));$('view-'+v).classList.add('active');document.querySelectorAll('.nav-btn').forEach(b=>b.classList.toggle('active',b.dataset.view===v));if(v==='perf')renderPerformance();if(v==='history')renderHistory();if(v==='cal')renderCalibration();window.scrollTo({top:0,behavior:'instant'})}
+function explainer(){const steps=[['外部価格 ≠ ASTRO判定価格','この研究ツールは外部市場データを使います。ASTROの行使価格・判定価格は発行者側で決まり、数ティックの差でも15秒では結果が変わります。'],['15秒はノイズが大きい','Model scoreを勝率と呼びません。+15秒のwalk-forwardと、あなたが記録するASTROデモ結果を分離して蓄積し、十分なサンプルで検証します。'],['ASTROには接続しません','ログイン、画面解析、注文送信、自動売買は行いません。DEMO / RESEARCH専用です。']];let i=0;const root=$('explainer');if(localStorage.getItem('astroExplained')==='1')return;root.classList.remove('hidden');const draw=()=>{$('exNum').textContent='0'+(i+1)+' / 03';$('exTitle').textContent=steps[i][0];$('exBody').textContent=steps[i][1];$('exDots').innerHTML=steps.map((_,n)=>`<div class="ex-dot ${n===i?'on':''}"></div>`).join('');$('exNext').textContent=i===2?'研究画面を開く':'次へ'};draw();$('exNext').onclick=()=>{if(i<2){i++;draw();haptic()}else{localStorage.setItem('astroExplained','1');root.classList.add('hidden')}}}
+function setupPin(){const saved=localStorage.getItem('astroPin');if(!saved)return;let pin='';$('lock').classList.add('show');const draw=()=>{$('pinDots').textContent=[0,1,2,3].map(i=>i<pin.length?'●':'○').join(' ')};$('pinGrid').innerHTML=[1,2,3,4,5,6,7,8,9,'',0,'⌫'].map(n=>n===''?'<span></span>':`<button data-pin="${n}">${n}</button>`).join('');$('pinGrid').onclick=e=>{const b=e.target.closest('button');if(!b)return;const v=b.dataset.pin;if(v==='⌫')pin=pin.slice(0,-1);else if(pin.length<4)pin+=v;draw();if(pin.length===4){if(pin===saved){$('lock').classList.remove('show');pin='';draw();haptic(20)}else{pin='';draw();toast('PINが違います');haptic(40)}}};$('pinClear').onclick=()=>{pin='';draw()}}
+function selfTests(){const tests=[];tests.push(Math.abs(breakEven(2.05)-.487804878)<1e-8);tests.push(classify(158.1594,158.15949)==='TIE');tests.push(classify(158.159,158.160)==='UP');tests.push(wilson(50,100)<.5&&wilson(100,100)>.96);tests.push(!(Date.now()>=Date.now()+15000));const ok=tests.every(Boolean);$('engineStatus').textContent=ok?'ENGINE OK':'ENGINE TEST FAIL';$('engineStatus').style.color=ok?'#35e2a2':'#ff557d';return ok}
+
+async function init(){loadLocal();await DB.open();S.forecasts=await DB.all('forecasts');S.cals=await DB.all('calibrations');S.manual=await DB.all('manual');S.forecasts.sort((a,b)=>a.createdAt-b.createdAt);S.cals.sort((a,b)=>a.ts-b.ts);S.manual.sort((a,b)=>a.ts-b.ts);renderCalibration();renderPerformance();renderHistory();setupEvents();explainer();setupPin();selfTests();startSimulation();setInterval(async()=>{const now=Date.now();await createForecast(now);await matureForecasts(now);renderLive();if(S.currentView==='perf')renderPerformance()},1000);setInterval(()=>{if(S.currentView==='live')renderLive()},250);if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{})}
+function renderAll(){loadLocal();renderCalibration();renderPerformance();renderHistory();renderLive()}
+function setupEvents(){document.querySelectorAll('.nav-btn').forEach(b=>b.onclick=()=>switchView(b.dataset.view));document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>switchView(b.dataset.go));$('fillPriceBtn').onclick=()=>{$('astroPriceInput').value=fmt(appliedPrice(),3)};$('syncBtn').onclick=syncCalibration;$('applyOffset').onchange=e=>{S.settings.applyOffset=e.target.checked;saveLocal();renderLive()};document.querySelectorAll('.result-btn').forEach(b=>b.onclick=()=>{S.selectedResult=b.dataset.result;document.querySelectorAll('.result-btn').forEach(x=>x.style.outline='');b.style.outline='2px solid #4fe0ff';$('saveManual').disabled=false});$('saveManual').onclick=saveManual;$('histTabs').onclick=e=>{const b=e.target.closest('.chip');if(!b)return;S.histFilter=b.dataset.filter;document.querySelectorAll('#histTabs .chip').forEach(x=>x.classList.toggle('active',x===b));renderHistory()};$('histSearch').oninput=renderHistory;$('refreshHist').onclick=renderHistory;$('exportCsv').onclick=exportCSV;$('connectBtn').onclick=connectTwelve;$('simBtn').onclick=()=>startSimulation();$('saveSettings').onclick=()=>{S.settings.payout=clamp(Number($('payout').value)||2.05,1.01,10);S.settings.margin=clamp((Number($('margin').value)||0)/100,0,.25);S.settings.calFresh=clamp(Number($('calFresh').value)||60,10,3600);saveLocal();renderPerformance();toast('設定を保存しました')};$('savePin').onclick=()=>{const p=$('newPin').value.trim();if(p&&!/^\d{4}$/.test(p)){toast('PINは4桁の数字');return}if(p)localStorage.setItem('astroPin',p);else localStorage.removeItem('astroPin');$('newPin').value='';toast(p?'PINを設定しました':'PINを解除しました')};$('exportJson').onclick=backup;$('importJson').onchange=e=>{if(e.target.files[0])restore(e.target.files[0]);e.target.value=''};$('resetData').onclick=async()=>{if(!confirm('履歴・モデル・同期データをこの端末から削除します。よろしいですか？'))return;await DB.clearAll();S.forecasts=[];S.cals=[];S.manual=[];S.model={weights:new Array(10).fill(0),bias:0,n:0,lr:.025,l2:.0004};saveLocal();renderAll();toast('端末データを初期化しました')};document.addEventListener('visibilitychange',()=>{if(document.hidden){S._hiddenAt=Date.now()}else if(S._hiddenAt){const end=Date.now();if(end-S._hiddenAt>1500)S.hiddenGaps.push({start:S._hiddenAt,end});S._hiddenAt=null;S.lastForecastAt=end;renderLive()}})}
+window.addEventListener('beforeunload',()=>{try{S.ws?.close()}catch{}});/* v0.2 audit hardening: independent horizons, source purity, truthful settlement timing */
+function resetForSourceChange(next){
+ if(S.provider===next)return;
+ const now=Date.now();
+ S.sessionStart=now;
+ S.lastForecastAt=now;
+ S.model={weights:new Array(10).fill(0),bias:0,n:0,lr:.025,l2:.0004,lastTrainAt:0};
+ S.hiddenGaps.push({start:now-16000,end:now+16000});
+ for(const f of S.forecasts){
+  if(f.status==='pending'){f.status='invalid';f.invalidReason='provider source changed';DB.put('forecasts',f).catch(()=>{})}
+ }
+ saveLocal();
+}
+const startSimulationBase=startSimulation;
+startSimulation=function(){resetForSourceChange('SIMULATED');return startSimulationBase()};
+const connectTwelveBase=connectTwelve;
+connectTwelve=function(){if($('apiKey').value.trim())resetForSourceChange('TWELVE_DATA');return connectTwelveBase()};
+
+matureForecasts=async function(now=Date.now()){
+ const pending=S.forecasts.filter(f=>f.status==='pending'&&now>=f.targetAt);
+ for(const r of pending){
+  const invalid=r.source!==S.provider||r.createdAt<S.sessionStart||hasGap(r.createdAt,r.targetAt);
+  if(invalid){r.status='invalid';r.invalidReason='source switch or timing gap';await DB.put('forecasts',r);continue}
+  const tk=S.ticks.find(x=>x.t>=r.targetAt&&x.t<=r.targetAt+1500&&x.s===r.source);
+  if(!tk){
+   if(now<r.targetAt+1700)continue;
+   r.status='invalid';r.invalidReason='no post-expiry tick';await DB.put('forecasts',r);continue
+  }
+  r.future=tk.p;r.actual=classify(r.entry,r.future);r.status='matured';r.settledAt=tk.t;
+  r.pred=r.score>=.5?'UP':'DOWN';
+  r.correct=r.actual!=='TIE'&&r.pred===r.actual;
+  r.tie=r.actual==='TIE';
+  await DB.put('forecasts',r);
+  if(r.actual!=='TIE'&&r.quality>=60&&r.createdAt>=(S.model.lastTrainAt||0)+15000){
+   S.model.lastTrainAt=r.createdAt;
+   updateModel(r.vector,r.actual==='UP'?1:0)
+  }
+ }
+};
+
+providerPerf=function(){
+ const data=S.forecasts.filter(x=>x.status==='matured'&&x.source===S.provider).sort((a,b)=>a.createdAt-b.createdAt);
+ const a=[];let last=-Infinity;
+ for(const r of data){if(r.createdAt>=last+15000){a.push(r);last=r.createdAt}}
+ const wins=a.filter(x=>x.correct).length;
+ const subset=a.slice(-100);
+ return {a,n:a.length,wins,hit:a.length?wins/a.length:0,
+  tie:a.length?a.filter(x=>x.tie).length/a.length:0,
+  roll100:subset.length?subset.filter(x=>x.correct).length/subset.length:0,
+  maxLoss:maxLosing(a.map(x=>!!x.correct)),wilson:wilson(wins,a.length)}
+};
+
+const syncCalibrationBase=syncCalibration;
+syncCalibration=async function(){
+ const raw=$('astroPriceInput').value.trim();
+ if(!/^\d{2,3}\.\d{3}$/.test(raw)||Number(raw)<50||Number(raw)>300){
+  toast('ASTRO表示の3桁価格を入力（例 158.159）');return
+ }
+ return syncCalibrationBase()
+};
+const saveManualBase=saveManual;
+saveManual=async function(){
+ const raw=$('manualEntry').value.trim();
+ if(!/^\d{2,3}\.\d{3}$/.test(raw)||Number(raw)<50||Number(raw)>300){
+  toast('ASTROエントリー価格を3桁で入力');return
+ }
+ // The original result button is tapped ~15s after the entry, not at entry time.
+ const target=Date.now()-15000;
+ const candidate=S.forecasts.filter(x=>x.source!=='SIMULATED')
+   .sort((a,b)=>Math.abs(a.createdAt-target)-Math.abs(b.createdAt-target))[0];
+ if(!candidate||Math.abs(candidate.createdAt-target)>2500){
+  toast('対応する15秒前の実データがありません。参考記録として保存します。')
+ }
+ return saveManualBase()
+};
+
+init();
 </script>
 </body>
 </html>
