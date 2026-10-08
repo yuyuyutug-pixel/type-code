@@ -9,39 +9,24 @@
 html,body{margin:0;background:#050a14;color:#f4f7ff;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Noto Sans JP",sans-serif}
 .boot{min-height:100svh;display:grid;place-items:center;padding:24px;text-align:center}
 .spin{width:28px;height:28px;border:2px solid #20355d;border-top-color:#4fe0ff;border-radius:50%;animation:s 1s linear infinite;margin:0 auto 14px}
-@keyframes s{to{transform:rotate(360deg)}}
-.small{color:#8ea2c6;font-size:12px;margin-top:8px}
+@keyframes s{to{transform:rotate(360deg)}}.small{color:#8ea2c6;font-size:12px;margin-top:8px}
 </style>
 </head>
 <body>
 <div class="boot"><div><div class="spin"></div><b>ASTRO LAB 15</b><div class="small">Research engine loading…</div></div></div>
 <script>
 (async()=>{
-  try{
-    const parts=await Promise.all([1,2,3,4,5,6].map(n=>
-      fetch(`./chunks/${n}.txt`,{cache:'no-store'}).then(r=>{
-        if(!r.ok) throw new Error('chunk '+n);
-        return r.text();
-      })
-    ));
-    const tail=await fetch('./chunks/tail.txt',{cache:'no-store'}).then(r=>{
-      if(!r.ok) throw new Error('tail');
-      return r.text();
-    });
-    const bin=atob(parts.join('').replace(/\s+/g,''));
-    const bytes=Uint8Array.from(bin,c=>c.charCodeAt(0));
-    let html=new TextDecoder().decode(bytes)+tail;
-    html=html
-      .replaceAll('href="/manifest.webmanifest"','href="./manifest.webmanifest"')
-      .replaceAll('href="/icon.svg"','href="./icon.svg"')
-      .replaceAll("register('/sw.js')","register('./sw.js')");
-    document.open();
-    document.write(html);
-    document.close();
-  }catch(e){
-    document.body.innerHTML='<div class="boot"><div><b>ASTRO LAB 15</b><p style="color:#ff557d">起動データの読込に失敗しました。再読み込みしてください。</p></div></div>';
-    console.error(e);
-  }
+try{
+const parts=await Promise.all([1,2,3,4,5].map(n=>fetch('./chunks/'+n+'.txt',{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error('chunk '+n);return r.text()})));
+const rest=await fetch('./chunks/rest.txt',{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error('rest');return r.text()});
+const bin=atob(parts.join('').replace(/\s+/g,''));
+let html=new TextDecoder().decode(Uint8Array.from(bin,c=>c.charCodeAt(0)))+rest;
+html=html.replace('href="/manifest.webmanifest"','href="./manifest.webmanifest"')
+.replace('<link rel="icon" href="/icon.svg" type="image/svg+xml" />','')
+.replace('<link rel="apple-touch-icon" href="/icon.svg" />','')
+.replace("register('/sw.js')","register('./sw.js')");
+document.open();document.write(html);document.close();
+}catch(e){document.body.innerHTML='<div class="boot"><div><b>ASTRO LAB 15</b><p style="color:#ff557d">起動データの読込に失敗しました。再読み込みしてください。</p></div></div>';console.error(e)}
 })();
 </script>
 </body>
